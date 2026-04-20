@@ -1,0 +1,145 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import { getCollection } from "astro:content";
+
+const symbols = await getCollection("symbols");
+symbols.sort((a, b) => a.data.term.localeCompare(b.data.term));
+
+// Group by first letter
+const byLetter = new Map<string, typeof symbols>();
+for (const s of symbols) {
+  const L = s.data.letter.toUpperCase();
+  if (!byLetter.has(L)) byLetter.set(L, [] as unknown as typeof symbols);
+  (byLetter.get(L) as typeof symbols).push(s);
+}
+const letters = Array.from(byLetter.keys()).sort();
+
+// Derive filter themes from actual data — top N most frequent.
+const themeCounts = new Map<string, number>();
+for (const s of symbols) {
+  for (const t of s.data.themes) themeCounts.set(t, (themeCounts.get(t) || 0) + 1);
+}
+const topThemes = Array.from(themeCounts.entries())
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 8)
+  .map(([t]) => t);
+
+const title = "A–Z of Dream Symbols | I Had This Dream";
+const description = `Scholarly entries on ${symbols.length} dream symbols — animals, celestial bodies, archetypes, body, objects, actions, and nature.`;
+---
+
+<Base title={title} description={description}>
+  <SiteNav active="symbols" />
+
+  <main class="container" style="padding-top: 56px; padding-bottom: 96px;">
+    <div class="eyebrow" style="justify-content: flex-start;">Dream dictionary</div>
+    <h1 style="font-size: clamp(36px, 5vw, 56px); margin-bottom: 16px;">
+      An <em style="color: var(--lav-deep); font-style: italic;">A–Z</em> of dream symbols
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 40px;">
+      {symbols.length} entries. Each one draws on depth psychology and the world's
+      dream-traditions. Click through to the full reading.
+    </p>
+
+    <div class="symbols-controls">
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"></circle>
+          <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path>
+        </svg>
+        <input id="sym-search" type="search" placeholder={`Search ${symbols.length} symbols…`} autocomplete="off" />
+      </div>
+      <div class="letter-nav">
+        {letters.map((l) => <a href={`#letter-${l}`}>{l}</a>)}
+      </div>
+    </div>
+
+    <div class="symbols-controls" style="margin-bottom: 32px;">
+      <button class="chip" data-theme-filter="" style="background: var(--lav); color: #fff;">All</button>
+      {topThemes.map((t) => <button class="chip" data-theme-filter={t}>{t}</button>)}
+    </div>
+
+    {
+      letters.map((L) => {
+        const items = byLetter.get(L) as typeof symbols;
+        return (
+          <section class="symbols-group" id={`letter-${L}`} data-letter-group={L}>
+            <div class="symbols-letter">{L}</div>
+            <div class="symbols-list">
+              {items.map((s) => (
+                <a
+                  href={`/symbols/${s.data.letter.toLowerCase()}/${s.id.replace(/\.md$/, "")}`}
+                  class="symbol-row"
+                  data-term={s.data.term.toLowerCase()}
+                  data-themes={s.data.themes.join("|").toLowerCase()}
+                >
+                  <div class="symbol-term">{s.data.term}</div>
+                  <div class="symbol-gloss">{s.data.gloss}</div>
+                </a>
+              ))}
+            </div>
+          </section>
+        );
+      })
+    }
+
+    <div id="sym-empty" style="display: none; text-align: center; padding: 48px 0; color: var(--ink-faint); font-style: italic;">
+      No symbols match this search.
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+
+  <script is:inline>
+    (function () {
+      const input = document.getElementById("sym-search");
+      const empty = document.getElementById("sym-empty");
+      const rows = Array.from(document.querySelectorAll(".symbol-row"));
+      const groups = Array.from(document.querySelectorAll("[data-letter-group]"));
+      const chips = Array.from(document.querySelectorAll("[data-theme-filter]"));
+      let q = "";
+      let theme = "";
+
+      function apply() {
+        const qL = q.trim().toLowerCase();
+        let visibleCount = 0;
+        rows.forEach((r) => {
+          const term = r.dataset.term || "";
+          const themes = r.dataset.themes || "";
+          const matchQ = !qL || term.includes(qL);
+          const matchT = !theme || themes.split("|").includes(theme);
+          const show = matchQ && matchT;
+          r.style.display = show ? "" : "none";
+          if (show) visibleCount++;
+        });
+        groups.forEach((g) => {
+          const anyVisible = Array.from(g.querySelectorAll(".symbol-row")).some(
+            (r) => r.style.display !== "none",
+          );
+          g.style.display = anyVisible ? "" : "none";
+        });
+        empty.style.display = visibleCount === 0 ? "" : "none";
+      }
+
+      input.addEventListener("input", (e) => {
+        q = e.target.value;
+        apply();
+      });
+      chips.forEach((c) =>
+        c.addEventListener("click", () => {
+          theme = c.dataset.themeFilter;
+          chips.forEach((other) => {
+            const active = other.dataset.themeFilter === theme;
+            other.style.background = active ? "var(--lav)" : "";
+            other.style.color = active ? "#fff" : "";
+          });
+          apply();
+        }),
+      );
+    })();
+  </script>
+</Base>

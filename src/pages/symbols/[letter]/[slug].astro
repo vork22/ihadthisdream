@@ -1,0 +1,122 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const symbols = await getCollection("symbols");
+  return symbols.map((s) => ({
+    params: {
+      letter: s.data.letter.toLowerCase(),
+      slug: s.id.replace(/\.md$/, ""),
+    },
+    props: { symbol: s },
+  }));
+}
+
+const { symbol } = Astro.props;
+const { Content } = await render(symbol);
+
+const title = `${symbol.data.term} — Dream Meaning & Symbolism | I Had This Dream`;
+const description = symbol.data.gloss;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "DefinedTerm",
+  name: symbol.data.term,
+  description: symbol.data.gloss,
+  inDefinedTermSet: "https://ihadthisdream.com/symbols",
+  url: `https://ihadthisdream.com/symbols/${symbol.data.letter.toLowerCase()}/${symbol.id.replace(/\.md$/, "")}`,
+};
+
+// Find related symbols by name
+const allSymbols = await getCollection("symbols");
+const related = symbol.data.related
+  .map((name) =>
+    allSymbols.find((s) => s.data.term.toLowerCase() === name.toLowerCase()),
+  )
+  .filter(Boolean) as typeof allSymbols;
+---
+
+<Base title={title} description={description} jsonLd={jsonLd}>
+  <SiteNav active="symbols" />
+
+  <main class="container" style="padding-top: 56px; padding-bottom: 96px; max-width: 760px;">
+    <div class="eyebrow" style="justify-content: flex-start;">
+      <a href="/symbols" style="color: inherit;">Symbol dictionary</a>
+      <span style="margin: 0 8px; opacity: 0.5;">/</span>
+      <span>{symbol.data.letter}</span>
+    </div>
+
+    <h1
+      style="font-size: clamp(48px, 7vw, 80px); font-weight: 400; margin-bottom: 16px; text-wrap: balance; letter-spacing: -0.02em;"
+    >
+      {symbol.data.term}
+    </h1>
+
+    <p
+      style="font-family: var(--display); font-size: 22px; font-style: italic; color: var(--peach-deep); margin-bottom: 24px; text-wrap: pretty;"
+    >
+      {symbol.data.gloss}
+    </p>
+
+    {
+      symbol.data.traditions.length > 0 && (
+        <div class="dream-card-themes" style="margin-bottom: 40px;">
+          {symbol.data.traditions.map((t) => <span>{t}</span>)}
+        </div>
+      )
+    }
+
+    <div class="analysis-body" style="font-size: 19px;">
+      <Content />
+    </div>
+
+    {
+      symbol.data.themes.length > 0 && (
+        <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line);">
+          <div class="tweak-label" style="margin-bottom: 12px;">Themes</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            {symbol.data.themes.map((t) => (
+              <span class="chip" style="cursor: default;">
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    {
+      related.length > 0 && (
+        <div style="margin-top: 40px;">
+          <div class="tweak-label" style="margin-bottom: 12px;">Related symbols</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            {related.map((r) => (
+              <a
+                href={`/symbols/${r.data.letter.toLowerCase()}/${r.id.replace(/\.md$/, "")}`}
+                class="chip"
+              >
+                {r.data.term}
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    <div style="margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line);">
+      <a href="/#interpret" class="btn">
+        Interpret a dream with this symbol
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M1 7h12m0 0L8 2m5 5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+      </a>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

@@ -1,0 +1,113 @@
+---
+import "~/styles/globals.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  jsonLd?: unknown;
+}
+
+const {
+  title = "I Had This Dream — dream interpretation, symbols & journal",
+  description = "A scholarly, warm dream interpreter drawing on Jung, Vedic, Indigenous, Sufi, and folk traditions. Chat about your dream, explore common dream meanings, browse an A–Z of symbols, and keep a private journal.",
+  ogImage = "/assets/hero-woodcut.png",
+  jsonLd,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const ogUrl = new URL(ogImage, Astro.site).toString();
+
+const defaultGraph = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://ihadthisdream.com/#website",
+      url: "https://ihadthisdream.com/",
+      name: "I Had This Dream",
+      description,
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://ihadthisdream.com/#org",
+      name: "I Had This Dream",
+      url: "https://ihadthisdream.com/",
+    },
+    {
+      "@type": "WebApplication",
+      name: "I Had This Dream",
+      applicationCategory: "LifestyleApplication",
+      operatingSystem: "Any",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+  ],
+};
+
+const ld = jsonLd ?? defaultGraph;
+---
+
+<!doctype html>
+<html lang="en" data-theme="dawn" data-font="editorial">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta
+      name="keywords"
+      content="dream interpretation, dream meaning, dream symbols, Jung, Freud, Vedic, Sufi, Indigenous dream traditions, dream journal"
+    />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:site_name" content="I Had This Dream" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl} />
+
+    <!-- LLM crawler hints -->
+    <meta name="ai-content-declaration" content="scholar-assisted" />
+    <meta
+      name="description-llm"
+      content="A warm, scholarly dream-interpretation companion. Multi-turn chat, common dreams, A–Z symbol dictionary. Indexing welcome."
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts: all three pairings -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Geist:wght@400..700&family=Instrument+Serif:ital@0;1&family=Nunito:wght@400..700&family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Work+Sans:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+
+    <!-- Restore theme/font before first paint -->
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem("ihtd_theme");
+          var f = localStorage.getItem("ihtd_font");
+          if (t) document.documentElement.setAttribute("data-theme", t);
+          if (f) document.documentElement.setAttribute("data-font", f);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

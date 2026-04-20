@@ -1,0 +1,78 @@
+---
+// Theme + font switcher — vanilla JS island (no React). Toggles
+// data-theme / data-font on <html> and persists to localStorage.
+---
+
+<button
+  id="tweaks-toggle"
+  aria-label="Open tweaks"
+  aria-expanded="false"
+  style="position: fixed; bottom: 24px; right: 24px; z-index: 201; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; font-size: 18px; box-shadow: 0 10px 30px -10px rgba(42,34,51,.2);"
+>
+  ✦
+</button>
+
+<aside id="tweaks" class="tweaks" role="dialog" aria-label="Theme and font tweaks">
+  <h4>Tweaks</h4>
+  <div class="tweak-row">
+    <div class="tweak-label">Theme</div>
+    <div class="tweak-swatches" role="radiogroup" aria-label="Theme">
+      <button class="swatch swatch-dawn" data-theme-btn="dawn" aria-label="Dawn"></button>
+      <button class="swatch swatch-twilight" data-theme-btn="twilight" aria-label="Twilight"></button>
+      <button class="swatch swatch-linen" data-theme-btn="linen" aria-label="Linen"></button>
+      <button class="swatch swatch-mist" data-theme-btn="mist" aria-label="Mist"></button>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <div class="tweak-label">Font</div>
+    <div class="tweak-fonts" role="radiogroup" aria-label="Font pairing">
+      <button class="font-opt" data-font-btn="editorial">Editorial — EB Garamond × Geist</button>
+      <button class="font-opt" data-font-btn="modern">Soft Modern — Instrument × Nunito</button>
+      <button class="font-opt" data-font-btn="classic">Classic — Playfair × Work Sans</button>
+    </div>
+  </div>
+</aside>
+
+<script is:inline>
+  (function () {
+    const html = document.documentElement;
+    const panel = document.getElementById("tweaks");
+    const toggle = document.getElementById("tweaks-toggle");
+    if (!html.dataset.theme) html.setAttribute("data-theme", "dawn");
+    if (!html.dataset.font) html.setAttribute("data-font", "editorial");
+
+    toggle.addEventListener("click", () => {
+      const open = panel.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    function sync() {
+      document.querySelectorAll("[data-theme-btn]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.themeBtn === html.dataset.theme);
+      });
+      document.querySelectorAll("[data-font-btn]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.fontBtn === html.dataset.font);
+      });
+    }
+    sync();
+
+    document.querySelectorAll("[data-theme-btn]").forEach((b) =>
+      b.addEventListener("click", () => {
+        html.setAttribute("data-theme", b.dataset.themeBtn);
+        try {
+          localStorage.setItem("ihtd_theme", b.dataset.themeBtn);
+        } catch (e) {}
+        sync();
+      }),
+    );
+    document.querySelectorAll("[data-font-btn]").forEach((b) =>
+      b.addEventListener("click", () => {
+        html.setAttribute("data-font", b.dataset.fontBtn);
+        try {
+          localStorage.setItem("ihtd_font", b.dataset.fontBtn);
+        } catch (e) {}
+        sync();
+      }),
+    );
+  })();
+</script>

@@ -1,0 +1,78 @@
+---
+const FAQ_ITEMS = [
+  {
+    q: "Are dream interpretations literal?",
+    a: "Almost never. Dream images are symbolic — they use the vocabulary of your inner life, not the rules of waking logic. A dream of death rarely predicts death; it almost always marks a phase ending and another beginning. The images I Had This Dream offers are starting points for reflection, not verdicts.",
+  },
+  {
+    q: "Which tradition does the interpretation draw from?",
+    a: "All of them, carefully. I Had This Dream is built on scholarship from Jung's archetypal psychology, Freud's symbolic analysis, Vedic and Hindu dream-lore (including the Atharvaveda and Upanishadic traditions), Indigenous dream cosmologies, and folk traditions from around the world. The interpretation notes which tradition it is drawing on so you can follow the thread yourself.",
+  },
+  {
+    q: "Is my dream data private?",
+    a: "Yes. Your journal is saved only to your browser's local storage — nothing leaves your device except the text of the dream you choose to interpret, which is sent to the interpretation model for that single request. We don't train on your dreams or sell your data.",
+  },
+  {
+    q: "How do I remember my dreams better?",
+    a: "The simplest practice: keep a notebook by your bed and, the moment you wake, write down any image or feeling you can recall — even a single word. Do not move. Do not check your phone. Over a few weeks, recall sharpens dramatically. Dreams that feel important often repeat; let them.",
+  },
+  {
+    q: "What is a recurring dream trying to tell me?",
+    a: "Recurrence is the psyche's underline. A dream that returns is bringing a message that hasn't yet been received — sometimes because the waking self isn't ready, sometimes because the symbol is still being clarified. The content usually shifts slightly each time. Noticing what changes is often as revealing as the dream itself.",
+  },
+  {
+    q: "Can dreams predict the future?",
+    a: "Most dream scholars today treat so-called precognitive dreams as the psyche noticing patterns before the conscious mind does — emotional truths about relationships or situations that haven't yet surfaced. Some traditions (Hindu, Irish, Lakota among them) hold that dreams can carry genuine foresight. Either way, it is wise to listen.",
+  },
+  {
+    q: "Should I interpret my dream alone or with someone?",
+    a: "Both have value. Interpreting alone lets the dream's meaning rise without another's framework interfering. Working with a partner, therapist, or dream group reveals facets you can't see from inside. Think of I Had This Dream as a knowledgeable companion — one lens among several.",
+  },
+];
+
+const faqLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+---
+
+<div class="faq-list">
+  {
+    FAQ_ITEMS.map((item, i) => (
+      <div class="faq-item">
+        <button
+          class:list={["faq-q", i === 0 && "open"]}
+          type="button"
+          aria-expanded={i === 0 ? "true" : "false"}
+          data-faq-q
+        >
+          <span>{item.q}</span>
+          <span class="plus">+</span>
+        </button>
+        <div class:list={["faq-a", i === 0 && "open"]} data-faq-a>
+          <div>{item.a}</div>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+<script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
+
+<script is:inline>
+  (function () {
+    document.querySelectorAll("[data-faq-q]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const open = btn.classList.toggle("open");
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        const answer = btn.nextElementSibling;
+        if (answer) answer.classList.toggle("open", open);
+      });
+    });
+  })();
+</script>
