@@ -49,13 +49,39 @@ export default function DreamChat() {
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const latestMsgRef = useRef<HTMLDivElement | null>(null);
+  const userScrolledRef = useRef(false);
 
+  // Detect manual scroll-up so we don't fight the user mid-read.
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      if (window.scrollY < lastY - 4) userScrolledRef.current = true;
+      lastY = window.scrollY;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Keep the latest message visible in the viewport as content streams in.
+  // Scrolls the WINDOW (not an inner container) so long interpretations read
+  // as one flowing column.
+  useEffect(() => {
+    if (userScrolledRef.current) return;
+    const el = latestMsgRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const targetBottom = window.innerHeight - 120;
+    if (rect.bottom > targetBottom || rect.top < 100) {
+      const delta = rect.bottom - targetBottom;
+      window.scrollBy({ top: delta, behavior: "smooth" });
     }
   }, [messages, streaming]);
+
+  // Reset the "user scrolled" flag whenever a new exchange begins.
+  useEffect(() => {
+    if (loading) userScrolledRef.current = false;
+  }, [loading]);
 
   const handleChip = (dream: string) => {
     if (messages.length > 0) return;
@@ -113,7 +139,10 @@ export default function DreamChat() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    // Enter sends; Shift+Enter inserts a newline. Matches ChatGPT/Claude/Gemini.
+    // Guarded against IME composition (e.g. Japanese/Chinese input).
+    const isComposing = (e.nativeEvent as KeyboardEvent & { isComposing?: boolean }).isComposing;
+    if (e.key === "Enter" && !e.shiftKey && !isComposing) {
       e.preventDefault();
       send();
     }
@@ -204,47 +233,28 @@ export default function DreamChat() {
             </button>
           </div>
 
-          <div className="chat-scroll" ref={scrollRef}>
+          <div className="chat-scroll">
             {messages.map((m, i) => {
-              const isLatestAssistant =
-                m.role === "assistant" &&
-                i === messages.length - 1 &&
-                !loading &&
-                !streaming;
+              const isLatest = i === messages.length - 1 && !streaming;
               return (
-                <div key={i} className={`chat-msg chat-${m.role}`}>
+                <div
+                  key={i}
+                  className={`chat-msg chat-${m.role}`}
+                  ref={isLatest ? latestMsgRef : null}
+                >
                   {m.role === "user" ? (
                     <div className="chat-bubble-user">{m.content}</div>
                   ) : (
-                    <div style={{ maxWidth: "92%" }}>
-                      <div
-                        className="chat-bubble-interpreter"
-                        dangerouslySetInnerHTML={{ __html: m.content }}
-                      />
-                      {isLatestAssistant && m.suggestions && m.suggestions.length > 0 && (
-                        <div className="chat-suggestions">
-                          {m.suggestions.map((s, si) => (
-                            <button
-                              key={si}
-                              className="chat-suggestion"
-                              onClick={() => {
-                                setInput(s);
-                                textareaRef.current?.focus();
-                              }}
-                              type="button"
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <div
+                      className="chat-bubble-interpreter"
+                      dangerouslySetInnerHTML={{ __html: m.content }}
+                    />
                   )}
                 </div>
               );
             })}
             {streaming && (
-              <div className="chat-msg chat-assistant">
+              <div className="chat-msg chat-assistant" ref={latestMsgRef}>
                 <div
                   className="chat-bubble-interpreter"
                   dangerouslySetInnerHTML={{
@@ -263,6 +273,38 @@ export default function DreamChat() {
               </div>
             )}
           </div>
+
+          {/* Suggestion pills — above the input when the latest assistant
+              message ended with a question. Small cloud-filled pills
+              matching the default dream chips. */}
+          {(() => {
+            const lastMsg = messages[messages.length - 1];
+            const show =
+              lastMsg &&
+              lastMsg.role === "assistant" &&
+              !loading &&
+              !streaming &&
+              lastMsg.suggestions &&
+              lastMsg.suggestions.length > 0;
+            if (!show) return null;
+            return (
+              <div className="chat-suggestions">
+                {lastMsg.suggestions!.map((s, si) => (
+                  <button
+                    key={si}
+                    className="chat-suggestion"
+                    onClick={() => {
+                      setInput(s);
+                      textareaRef.current?.focus();
+                    }}
+                    type="button"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
 
           <div className="chat-input-row">
             <textarea
@@ -303,7 +345,7 @@ export default function DreamChat() {
               >
                 Save to journal
               </button>
-              <span className="chat-hint">⌘ + Enter to send</span>
+              <span className="chat-hint">Enter to send · Shift + Enter for a new line</span>
             </div>
           )}
         </div>

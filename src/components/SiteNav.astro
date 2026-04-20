@@ -18,5 +18,59 @@ const { active = "" } = Astro.props as { active?: string };
       <a href="/#journal" class:list={[{ active: active === "journal" }]}>Journal</a>
       <a href="/#faq" class:list={[{ active: active === "faq" }]}>FAQ</a>
     </nav>
+    <button
+      class="nav-burger"
+      type="button"
+      aria-label="Open menu"
+      aria-expanded="false"
+      data-nav-burger
+    >
+      <span class="burger-bars">
+        <span></span><span></span><span></span>
+      </span>
+    </button>
   </div>
 </header>
+
+<div class="mobile-menu" data-mobile-menu>
+  <div class="mobile-menu-panel">
+    <a href="/#interpret">Interpret</a>
+    <a href="/#common">Common Dreams</a>
+    <a href="/symbols">Symbols A–Z</a>
+    <a href="/#journal">Journal</a>
+    <a href="/#faq">FAQ</a>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const burger = document.querySelector("[data-nav-burger]");
+    const menu = document.querySelector("[data-mobile-menu]");
+    if (!burger || !menu) return;
+    const bars = burger.querySelector(".burger-bars");
+
+    const setOpen = (open) => {
+      menu.classList.toggle("is-open", open);
+      if (bars) bars.classList.toggle("is-open", open);
+      burger.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+      burger.setAttribute("aria-expanded", String(open));
+      document.body.style.overflow = open ? "hidden" : "";
+    };
+
+    burger.addEventListener("click", () => {
+      setOpen(!menu.classList.contains("is-open"));
+    });
+    // Backdrop tap (click on the scrim, not the panel)
+    menu.addEventListener("click", (e) => {
+      if (e.target === menu) setOpen(false);
+    });
+    // Link clicks close the sheet
+    menu.querySelectorAll("a").forEach((a) => {
+      a.addEventListener("click", () => setOpen(false));
+    });
+    // Resize above the breakpoint closes + unlocks scroll
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900) setOpen(false);
+    });
+  })();
+</script>

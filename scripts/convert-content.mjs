@@ -3,7 +3,9 @@
  * Converts the design bundle's JS content (symbols + common dreams)
  * into Astro Content Collection markdown under src/content/.
  *
- * Source: ../ihadthisdream-design/{content,data}/*.js
+ * Source: ../design_handoff_ihadthisdream/project/{content,data}/*.js
+ *         (env DESIGN_ROOT overrides — useful when the design bundle
+ *          lives somewhere else on disk.)
  * Output: src/content/symbols/*.md + src/content/dreams/*.md
  *
  * Run with:  node scripts/convert-content.mjs
@@ -14,7 +16,17 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
-const designRoot = path.resolve(projectRoot, "..", "ihadthisdream-design");
+const designRoot =
+  process.env.DESIGN_ROOT ||
+  path.resolve(projectRoot, "..", "design_handoff_ihadthisdream", "project");
+
+if (!fs.existsSync(designRoot)) {
+  console.error(
+    `Design bundle not found at ${designRoot}. ` +
+      `Set DESIGN_ROOT=/absolute/path/to/bundle to override.`,
+  );
+  process.exit(1);
+}
 
 function readWindowExport(filename, key) {
   const src = fs.readFileSync(path.join(designRoot, filename), "utf8");

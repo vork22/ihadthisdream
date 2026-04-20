@@ -255,6 +255,106 @@ a:hover {
   color: var(--lav-deep);
 }
 
+/* Hamburger — hidden on desktop, shown on mobile via @media below */
+.nav-burger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: -8px;
+  color: var(--ink);
+  align-items: center;
+  justify-content: center;
+}
+.burger-bars {
+  display: block;
+  position: relative;
+  width: 22px;
+  height: 16px;
+}
+.burger-bars span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: var(--ink);
+  border-radius: 2px;
+  transition:
+    transform 0.25s ease,
+    opacity 0.2s ease,
+    top 0.25s ease;
+}
+.burger-bars span:nth-child(1) {
+  top: 2px;
+}
+.burger-bars span:nth-child(2) {
+  top: 7.5px;
+}
+.burger-bars span:nth-child(3) {
+  top: 13px;
+}
+.burger-bars.is-open span:nth-child(1) {
+  top: 7.5px;
+  transform: rotate(45deg);
+}
+.burger-bars.is-open span:nth-child(2) {
+  opacity: 0;
+}
+.burger-bars.is-open span:nth-child(3) {
+  top: 7.5px;
+  transform: rotate(-45deg);
+}
+
+/* Mobile menu sheet */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(42, 34, 51, 0.4);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.mobile-menu.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mobile-menu-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(320px, 82vw);
+  background: var(--bg);
+  border-left: 1px solid var(--line);
+  box-shadow: -8px 0 28px rgba(42, 34, 51, 0.08);
+  padding: 88px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.mobile-menu.is-open .mobile-menu-panel {
+  transform: translateX(0);
+}
+.mobile-menu-panel a {
+  display: block;
+  padding: 14px 4px;
+  font-family: var(--display);
+  font-size: 22px;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  font-style: italic;
+}
+.mobile-menu-panel a:hover {
+  color: var(--lav-deep);
+  text-decoration: none;
+}
+
 /* =========================================================
    HERO
    ========================================================= */
@@ -411,18 +511,20 @@ h1.hero-title em {
 /* =========================================================
    CHAT — reply suggestions, bubbles, typing, input row
    ========================================================= */
+/* Small cloud-filled pills matching the default dream chips, sitting above
+   the input row. Shown only when the last assistant reply ends with a
+   question (the interpreter's "differential" for unlocking this dream). */
 .chat-suggestions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 14px 0 4px;
-  padding-left: 2px;
-  animation: suggestions-in 0.4s ease-out;
+  gap: 6px;
+  padding: 10px 8px 0;
+  animation: suggestions-in 0.35s ease-out;
 }
 @keyframes suggestions-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
@@ -431,22 +533,20 @@ h1.hero-title em {
 }
 .chat-suggestion {
   font-family: var(--body);
-  font-size: 13.5px;
+  font-size: 12.5px;
   line-height: 1.35;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 999px;
-  background: transparent;
-  color: var(--ink);
-  border: 1px dashed color-mix(in oklab, var(--ink) 35%, transparent);
+  background: var(--cloud);
+  color: var(--lav-deep);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: all 0.15s;
   text-align: left;
 }
 .chat-suggestion:hover {
-  background: var(--peach);
-  border-color: var(--peach-deep);
-  border-style: solid;
-  color: var(--ink);
+  background: var(--lav);
+  color: white;
 }
 .chat-suggestion:active {
   transform: translateY(1px);
@@ -623,18 +723,11 @@ h1.hero-title em {
   color: var(--ink);
 }
 .chat-scroll {
-  max-height: 520px;
-  overflow-y: auto;
+  /* Let the page be the scroll surface — the window follows the stream so
+     long interpretations read as one flowing column. The DreamChat island
+     handles window-level autoscroll + yields when the user scrolls up. */
+  overflow: visible;
   padding: 4px 8px 8px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-}
-.chat-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.chat-scroll::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 3px;
 }
 .chat-msg {
   margin-bottom: 18px;
@@ -1362,6 +1455,9 @@ h1.hero-title em {
   }
   .nav-links {
     display: none;
+  }
+  .nav-burger {
+    display: flex;
   }
 }
 @media (max-width: 600px) {
