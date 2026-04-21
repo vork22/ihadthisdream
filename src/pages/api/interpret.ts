@@ -1,5 +1,7 @@
 import type { APIRoute } from "astro";
 import Anthropic from "@anthropic-ai/sdk";
+import { kv } from "@vercel/kv";
+import { categorize } from "~/lib/categorize";
 
 // Vercel serverless function — not prerendered.
 export const prerender = false;
@@ -78,6 +80,37 @@ function json(status: number, body: unknown): Response {
   });
 }
 
+// Fire-and-forget log of the first user dream, anonymized.
+// No IPs, no user agents, no identifiers. Only the text + categorization.
+// Silently no-ops when KV isn't configured (e.g. local dev without env vars).
+async function logDream(text: string): Promise<void> {
+  if (!process.env.KV_REST_API_URL && !process.env.KV_URL) return;
+  try {
+    const cat = await categorize(text);
+    const entry = {
+      t: Date.now(),
+      text: text.slice(0, 4000),
+      ...cat,
+    };
+    // Newest first via LPUSH; trim to the most recent 50k entries.
+    await kv.lpush("dreams:log", JSON.stringify(entry));
+    await kv.ltrim("dreams:log", 0, 49999);
+
+    for (const s of cat.symbols) {
+      await kv.hincrby("dreams:counts:symbols", s, 1);
+    }
+    for (const d of cat.commonDreams) {
+      await kv.hincrby("dreams:counts:commondreams", d, 1);
+    }
+    for (const th of cat.themes) {
+      await kv.hincrby("dreams:counts:themes", th, 1);
+    }
+    await kv.incr("dreams:counts:total");
+  } catch {
+    // Analytics must never break the interpretation path.
+  }
+}
+
 export const POST: APIRoute = async ({ request }) => {
   const apiKey = import.meta.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -105,6 +138,15 @@ export const POST: APIRoute = async ({ request }) => {
         m.content.length < 8000,
     )
     .slice(-20);
+
+  // Log only the FIRST turn of a fresh conversation (the user's dream as submitted).
+  // Follow-up turns aren't logged — they're answers to clarifying questions, not new dreams.
+  const isFirstTurn =
+    safeMessages.length === 1 && safeMessages[0].role === "user";
+  if (isFirstTurn) {
+    // Fire-and-forget — don't await, don't block the response.
+    void logDream(safeMessages[0].content);
+  }
 
   try {
     const client = new Anthropic({ apiKey });
