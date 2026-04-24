@@ -8,7 +8,8 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "generate:symbols": "node scripts/generate-symbol-images.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.0",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "openai": "^6.34.0",
     "typescript": "^5.7.0"
   }
 }
