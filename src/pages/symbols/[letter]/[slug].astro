@@ -50,6 +50,20 @@ const related = symbol.data.related
       <span>{symbol.data.letter}</span>
     </div>
 
+    {
+      symbol.data.image && (
+        <img
+          class="symbol-hero"
+          src={symbol.data.image}
+          alt={`Woodcut illustration of ${symbol.data.term}`}
+          width="320"
+          height="320"
+          loading="eager"
+          decoding="async"
+        />
+      )
+    }
+
     <h1
       style="font-size: clamp(48px, 7vw, 80px); font-weight: 400; margin-bottom: 16px; text-wrap: balance; letter-spacing: -0.02em;"
     >
@@ -92,14 +106,24 @@ const related = symbol.data.related
     {
       related.length > 0 && (
         <div style="margin-top: 40px;">
-          <div class="tweak-label" style="margin-bottom: 12px;">Related symbols</div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <div class="tweak-label" style="margin-bottom: 16px;">Related symbols</div>
+          <div class="related-symbol-grid">
             {related.map((r) => (
               <a
                 href={`/symbols/${r.data.letter.toLowerCase()}/${r.id.replace(/\.md$/, "")}`}
-                class="chip"
+                class="related-symbol"
               >
-                {r.data.term}
+                {r.data.image && (
+                  <img
+                    src={r.data.image}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    width="72"
+                    height="72"
+                  />
+                )}
+                <span>{r.data.term}</span>
               </a>
             ))}
           </div>

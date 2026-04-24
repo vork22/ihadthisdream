@@ -43,11 +43,17 @@ function parseModelResponse(raw: string): { message: string; suggestions: string
   return { message: raw, suggestions: [] };
 }
 
+type Visualization =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "done"; image: string; brief: string };
+
 export default function DreamChat() {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState("");
+  const [viz, setViz] = useState<Visualization>({ status: "idle" });
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const latestMsgRef = useRef<HTMLDivElement | null>(null);
   const userScrolledRef = useRef(false);
@@ -93,10 +99,42 @@ export default function DreamChat() {
     if (!input.trim() || loading) return;
     const userMsg: ChatMsg = { role: "user", content: input.trim() };
     const newHistory = [...messages, userMsg];
+    const isFirstTurn = messages.length === 0;
     setMessages(newHistory);
     setInput("");
     setLoading(true);
     setStreaming("");
+
+    // Kick off the woodcut visualization in parallel with interpretation, but
+    // only on the first turn (the actual dream submission). Follow-up turns
+    // are clarifications, not new dreams. We intentionally don't await it — if
+    // it fails (moderation, rate limit, timeout), we silently drop it rather
+    // than surfacing an error, since the user didn't explicitly request it.
+    if (isFirstTurn) {
+      setViz({ status: "loading" });
+      fetch("/api/visualize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dream: userMsg.content }),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            setViz({ status: "idle" });
+            return;
+          }
+          const data = (await res.json()) as { image?: string; brief?: string };
+          if (!data.image) {
+            setViz({ status: "idle" });
+            return;
+          }
+          setViz({
+            status: "done",
+            image: data.image,
+            brief: data.brief || "",
+          });
+        })
+        .catch(() => setViz({ status: "idle" }));
+    }
 
     try {
       const apiMessages = newHistory.map((m) => ({ role: m.role, content: m.content }));
@@ -157,13 +195,17 @@ export default function DreamChat() {
           : `<div class="journal-them">${m.content}</div>`,
       )
       .join("");
-    const entry = {
+    const entry: Record<string, unknown> = {
       id: Date.now(),
       date: new Date().toISOString(),
       dream: dreamText,
       lens: "Conversational",
       analysis,
     };
+    if (viz.status === "done") {
+      entry.image = viz.image;
+      entry.imageBrief = viz.brief;
+    }
     const existing = JSON.parse(localStorage.getItem("ihtd_journal") || "[]");
     existing.unshift(entry);
     localStorage.setItem("ihtd_journal", JSON.stringify(existing));
@@ -179,6 +221,7 @@ export default function DreamChat() {
     setMessages([]);
     setInput("");
     setStreaming("");
+    setViz({ status: "idle" });
   };
 
   const hasStarted = messages.length > 0 || streaming;
@@ -334,6 +377,40 @@ export default function DreamChat() {
               </svg>
             </button>
           </div>
+
+          {viz.status === "loading" &&
+            messages.filter((m) => m.role === "assistant").length >= 1 && (
+              <div className="dream-viz dream-viz-loading">
+                <div className="dream-viz-spinner" aria-hidden="true" />
+                <div className="dream-viz-caption">
+                  illuminating your dream…
+                </div>
+              </div>
+            )}
+
+          {viz.status === "done" && (
+            <figure className="dream-viz dream-viz-done">
+              <img
+                className="dream-viz-img"
+                src={viz.image}
+                alt={viz.brief ? `Woodcut: ${viz.brief}` : "Woodcut of your dream"}
+              />
+              {viz.brief && (
+                <figcaption className="dream-viz-brief">
+                  <em>{viz.brief}</em>
+                </figcaption>
+              )}
+              <div className="dream-viz-actions">
+                <a
+                  className="btn btn-ghost"
+                  href={viz.image}
+                  download={`dream-${new Date().toISOString().slice(0, 10)}.png`}
+                >
+                  Download image
+                </a>
+              </div>
+            </figure>
+          )}
 
           {messages.filter((m) => m.role === "assistant").length >= 1 && (
             <div className="chat-actions">

@@ -6,6 +6,8 @@ type JournalEntry = {
   dream: string;
   lens: string;
   analysis: string;
+  image?: string;
+  imageBrief?: string;
 };
 
 function formatDate(iso: string): string {
@@ -102,11 +104,63 @@ export default function JournalPane() {
               >
                 <div className="journal-date">
                   {formatDate(e.date)} · {e.lens}
+                  {e.image && (
+                    <span style={{ marginLeft: 8, opacity: 0.6 }}>· illuminated</span>
+                  )}
                 </div>
-                <div className="journal-preview">{e.dream}</div>
+                <div
+                  className="journal-preview"
+                  style={{
+                    display: "flex",
+                    gap: 14,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  {e.image && (
+                    <img
+                      src={e.image}
+                      alt=""
+                      style={{
+                        width: 56,
+                        height: 56,
+                        objectFit: "contain",
+                        flexShrink: 0,
+                        mixBlendMode: "multiply",
+                      }}
+                    />
+                  )}
+                  <span>{e.dream}</span>
+                </div>
               </button>
               {open && (
                 <div style={{ marginTop: 16 }}>
+                  {e.image && (
+                    <figure style={{ margin: "0 0 20px", textAlign: "center" }}>
+                      <img
+                        src={e.image}
+                        alt={e.imageBrief || ""}
+                        style={{
+                          width: "100%",
+                          maxWidth: 420,
+                          height: "auto",
+                          mixBlendMode: "multiply",
+                        }}
+                      />
+                      {e.imageBrief && (
+                        <figcaption
+                          style={{
+                            marginTop: 8,
+                            fontFamily: "var(--display)",
+                            fontStyle: "italic",
+                            fontSize: 14,
+                            color: "var(--ink-soft)",
+                          }}
+                        >
+                          {e.imageBrief}
+                        </figcaption>
+                      )}
+                    </figure>
+                  )}
                   <div
                     className="analysis-body"
                     dangerouslySetInnerHTML={{ __html: e.analysis }}

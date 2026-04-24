@@ -76,6 +76,17 @@ const description = `Scholarly entries on ${symbols.length} dream symbols — an
                   data-term={s.data.term.toLowerCase()}
                   data-themes={s.data.themes.join("|").toLowerCase()}
                 >
+                  {s.data.image && (
+                    <img
+                      class="symbol-thumb"
+                      src={s.data.image}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width="72"
+                      height="72"
+                    />
+                  )}
                   <div class="symbol-term">{s.data.term}</div>
                   <div class="symbol-gloss">{s.data.gloss}</div>
                 </a>

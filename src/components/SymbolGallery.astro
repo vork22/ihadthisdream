@@ -1,0 +1,122 @@
+---
+// A horizontal scroll strip of curated woodcut symbols for the homepage.
+// Pulls real entries from the symbols collection so the images and links stay
+// in sync with the dictionary.
+import { getCollection } from "astro:content";
+
+const CURATED_SLUGS = [
+  "moon",
+  "tree",
+  "snake",
+  "labyrinth",
+  "shadow",
+  "eye",
+  "mountain",
+  "flood",
+  "crown",
+  "tower",
+  "lion",
+  "mandala",
+  "chalice",
+  "key",
+  "mirror",
+  "bird",
+];
+
+const all = await getCollection("symbols");
+const bySlug = new Map(all.map((s) => [s.id.replace(/\.md$/, ""), s]));
+const curated = CURATED_SLUGS.map((slug) => bySlug.get(slug)).filter(
+  (s): s is NonNullable<typeof s> => Boolean(s),
+);
+---
+
+<div class="sym-gallery" aria-label="Featured dream symbols">
+  <div class="sym-gallery-track">
+    {
+      curated.map((s) => (
+        <a
+          class="sym-gallery-card"
+          href={`/symbols/${s.data.letter.toLowerCase()}/${s.id.replace(/\.md$/, "")}`}
+        >
+          {s.data.image && (
+            <img
+              class="sym-gallery-img"
+              src={s.data.image}
+              alt={`Woodcut of ${s.data.term}`}
+              loading="lazy"
+              decoding="async"
+              width="160"
+              height="160"
+            />
+          )}
+          <div class="sym-gallery-term">{s.data.term}</div>
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .sym-gallery {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 0 calc(var(--gutter, 24px) * -1);
+    padding: 0 var(--gutter, 24px);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .sym-gallery::-webkit-scrollbar {
+    display: none;
+  }
+  .sym-gallery-track {
+    display: flex;
+    gap: 20px;
+    padding: 4px 0 12px;
+    width: max-content;
+  }
+  .sym-gallery-card {
+    flex: 0 0 auto;
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    scroll-snap-align: start;
+  }
+  .sym-gallery-img {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+    display: block;
+    transition: transform 160ms ease;
+  }
+  .sym-gallery-card:hover .sym-gallery-img {
+    transform: translateY(-2px);
+  }
+  .sym-gallery-term {
+    font-family: var(--display);
+    font-size: 16px;
+    color: var(--ink);
+    margin-top: 6px;
+    letter-spacing: 0.01em;
+    text-transform: lowercase;
+  }
+  .sym-gallery-card:hover .sym-gallery-term {
+    color: var(--lav-deep);
+  }
+  @media (max-width: 640px) {
+    .sym-gallery-card {
+      width: 120px;
+    }
+    .sym-gallery-img {
+      width: 120px;
+      height: 120px;
+    }
+    .sym-gallery-term {
+      font-size: 14px;
+    }
+  }
+</style>

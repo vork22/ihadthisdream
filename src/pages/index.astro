@@ -4,6 +4,7 @@ import SiteNav from "~/components/SiteNav.astro";
 import SiteFooter from "~/components/SiteFooter.astro";
 import Tweaks from "~/components/Tweaks.astro";
 import FAQ from "~/components/FAQ.astro";
+import SymbolGallery from "~/components/SymbolGallery.astro";
 import DreamChat from "~/components/DreamChat.tsx";
 import JournalPane from "~/components/JournalPane.tsx";
 import { getCollection } from "astro:content";
@@ -94,10 +95,11 @@ const letters = Array.from(
             archetypes, body, objects, actions, and nature.
           </p>
         </div>
-        <div class="letter-nav" style="margin-bottom: 28px;">
+        <SymbolGallery />
+        <div class="letter-nav" style="margin: 24px 0 8px; justify-content: center;">
           {letters.map((l) => <a href={`/symbols#letter-${l}`}>{l}</a>)}
         </div>
-        <p style="text-align: center; margin-top: 32px;">
+        <p style="text-align: center; margin-top: 24px;">
           <a href="/symbols" class="btn btn-ghost">
             Browse the full dictionary
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">

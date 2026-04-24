@@ -1,0 +1,130 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import { getCollection } from "astro:content";
+import fs from "node:fs";
+import path from "node:path";
+
+const symbols = await getCollection("symbols");
+
+const previewDir = path.resolve(
+  process.cwd(),
+  "public/assets/symbols/preview-v2",
+);
+const v2Files = new Set<string>(
+  fs.existsSync(previewDir)
+    ? fs.readdirSync(previewDir).filter((f) => f.endsWith(".png"))
+    : [],
+);
+
+const rows = symbols
+  .map((s) => {
+    const slug = s.id.replace(/\.md$/, "");
+    const pngName = `${slug}.png`;
+    const hasV2 = v2Files.has(pngName);
+    return {
+      slug,
+      term: s.data.term,
+      v1: `/assets/symbols/${pngName}`,
+      v2: hasV2 ? `/assets/symbols/preview-v2/${pngName}` : null,
+    };
+  })
+  .filter((r) => r.v2) 
+  .sort((a, b) => a.term.localeCompare(b.term));
+---
+
+<Base
+  title="v1 vs v2 comparison"
+  description="Internal QC page"
+>
+  <SiteNav />
+  <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+    <h1 style="font-family: var(--display); font-size: 40px; margin-bottom: 8px;">
+      v1 vs v2 · {rows.length} symbols
+    </h1>
+    <p style="color: var(--ink-soft); margin-bottom: 32px;">
+      Left: <code>gpt-image-1</code>. Right: <code>gpt-image-2</code>.
+      Transparent PNGs over page background with <code>mix-blend-mode: multiply</code>.
+    </p>
+
+    <div class="cmp-grid">
+      {
+        rows.map((r) => (
+          <div class="cmp-card">
+            <div class="cmp-term">{r.term}</div>
+            <div class="cmp-pair">
+              <div class="cmp-cell">
+                <img src={r.v1} alt={`${r.term} v1`} loading="lazy" />
+                <div class="cmp-label">v1</div>
+              </div>
+              <div class="cmp-cell">
+                <img src={r.v2!} alt={`${r.term} v2`} loading="lazy" />
+                <div class="cmp-label">v2</div>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    {
+      rows.length === 0 && (
+        <p style="font-style: italic; color: var(--ink-faint);">
+          No v2 previews found yet. Run the v2 batch to populate{" "}
+          <code>public/assets/symbols/preview-v2/</code>.
+        </p>
+      )
+    }
+  </main>
+</Base>
+
+<style>
+  .cmp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 24px;
+  }
+  .cmp-card {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .cmp-term {
+    font-family: var(--display);
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+  .cmp-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .cmp-cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .cmp-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+    display: block;
+  }
+  .cmp-label {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    font-family: var(--mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: var(--ink-faint);
+    background: rgba(255, 255, 255, 0.8);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+</style>

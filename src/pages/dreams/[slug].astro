@@ -16,6 +16,43 @@ const { Content } = await render(dream);
 const title = `${dream.data.title} — Dream Meaning & Symbolism | I Had This Dream`;
 const description = dream.data.excerpt;
 
+// Auto-match symbols mentioned in this dream's body/title/excerpt so we can
+// illustrate the entry with the right woodcuts, even when the frontmatter's
+// relatedSymbols array is empty.
+const allSymbolsForMatching = await getCollection("symbols");
+const haystack = [
+  dream.data.title,
+  dream.data.excerpt,
+  dream.body ?? "",
+  dream.data.slug,
+]
+  .join(" \n ")
+  .toLowerCase();
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const matched: Array<{
+  entry: (typeof allSymbolsForMatching)[number];
+  firstIndex: number;
+}> = [];
+
+for (const s of allSymbolsForMatching) {
+  const term = s.data.term.toLowerCase();
+  if (term.length < 3) continue;
+  const re = new RegExp(`\\b${escapeRegex(term)}s?\\b`, "i");
+  const m = haystack.match(re);
+  if (m && typeof m.index === "number") {
+    matched.push({ entry: s, firstIndex: m.index });
+  }
+}
+
+const dreamSymbols = matched
+  .sort((a, b) => a.firstIndex - b.firstIndex)
+  .map((m) => m.entry)
+  .slice(0, 8);
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
@@ -56,6 +93,34 @@ const jsonLd = {
     <div class="analysis-body" style="font-size: 19px;">
       <Content />
     </div>
+
+    {
+      dreamSymbols.length > 0 && (
+        <div style="margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line);">
+          <div class="tweak-label" style="margin-bottom: 16px;">Symbols in this dream</div>
+          <div class="related-symbol-grid">
+            {dreamSymbols.map((r) => (
+              <a
+                href={`/symbols/${r.data.letter.toLowerCase()}/${r.id.replace(/\.md$/, "")}`}
+                class="related-symbol"
+              >
+                {r.data.image && (
+                  <img
+                    src={r.data.image}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    width="72"
+                    height="72"
+                  />
+                )}
+                <span>{r.data.term}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
 
     <div style="margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line);">
       <a href="/#interpret" class="btn">
