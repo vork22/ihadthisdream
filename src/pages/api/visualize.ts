@@ -38,17 +38,46 @@ Single cohesive scene centered with generous margin around it. Absolutely no dec
 
 // ---------- style anchor: read once, cached across warm invocations ----------
 
+// Vercel's adapter (with includeFiles in astro.config.mjs) ships
+// scripts/style-anchor.png into the function bundle, but the exact disk layout
+// inside .vercel/output/functions/api/visualize.func/ depends on adapter
+// version, so we try several plausible paths and use the first one that
+// exists. Locally, __dirname resolves into src/pages/api/, so the
+// "../../../scripts/style-anchor.png" form works in dev.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const STYLE_ANCHOR_PATH = path.resolve(
-  __dirname,
-  "../../../scripts/style-anchor.png",
-);
+const ANCHOR_CANDIDATES = [
+  // Local dev (Astro): src/pages/api → ../../../scripts/...
+  path.resolve(__dirname, "../../../scripts/style-anchor.png"),
+  // Vercel bundle: dist/server/pages/api → ../../../../scripts/...
+  path.resolve(__dirname, "../../../../scripts/style-anchor.png"),
+  // Vercel runtime cwd is typically the function root
+  path.resolve(process.cwd(), "scripts/style-anchor.png"),
+  // Belt-and-suspenders absolute path inside the bundle
+  path.resolve(process.cwd(), ".vercel/output/functions/_render.func/scripts/style-anchor.png"),
+];
+// Eagerly load the anchor at module init so a missing-file error surfaces
+// in Vercel function logs immediately and we can short-circuit the handler
+// before incrementing the per-IP rate-limit counter.
 let anchorBytesCache: Buffer | null = null;
-function getAnchorBytes(): Buffer {
-  if (!anchorBytesCache) {
-    anchorBytesCache = fs.readFileSync(STYLE_ANCHOR_PATH);
+let anchorLoadError: string | null = null;
+(function loadAnchor() {
+  for (const candidate of ANCHOR_CANDIDATES) {
+    try {
+      if (fs.existsSync(candidate)) {
+        anchorBytesCache = fs.readFileSync(candidate);
+        return;
+      }
+    } catch {
+      /* try next candidate */
+    }
   }
-  return anchorBytesCache;
+  anchorLoadError = `style-anchor.png not found. Tried: ${ANCHOR_CANDIDATES.join(", ")}`;
+  // eslint-disable-next-line no-console
+  console.error("[visualize] " + anchorLoadError);
+})();
+function getAnchorBytes(): Buffer {
+  if (anchorBytesCache) return anchorBytesCache;
+  throw new Error(anchorLoadError || "style-anchor.png not loaded");
 }
 
 // ---------- redis (reuses interpret.ts pattern) ----------
@@ -133,6 +162,9 @@ export const POST: APIRoute = async ({ request }) => {
   }
   if (!openaiKey) {
     return json(500, { error: "OPENAI_API_KEY not set on the server." });
+  }
+  if (anchorLoadError) {
+    return json(500, { error: anchorLoadError });
   }
 
   let body: Incoming;
@@ -219,9 +251,10 @@ export const POST: APIRoute = async ({ request }) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    const stack = err instanceof Error ? err.stack : undefined;
     // Don't leak upstream moderation details to the UI. Log server-side only.
     // eslint-disable-next-line no-console
-    console.error("[visualize] failed:", message);
+    console.error("[visualize] failed:", message, stack || "");
     return json(502, {
       error:
         "This dream resisted rendering. Try again in a moment, or try a different wording.",
