@@ -46,8 +46,23 @@ function parseModelResponse(raw: string): { message: string; suggestions: string
 type Visualization =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "done"; image: string; brief: string }
-  | { status: "limited"; message: string };
+  | { status: "done"; image: string; brief: string; used?: number; limit?: number; remaining?: number }
+  | { status: "limited"; message: string; used?: number; limit?: number; remaining?: number };
+
+type VisualizationResponse = {
+  image?: string;
+  brief?: string;
+  error?: string;
+  used?: number;
+  limit?: number;
+  remaining?: number;
+};
+
+function formatVizUsage(viz: Visualization): string | null {
+  if (viz.status !== "done" && viz.status !== "limited") return null;
+  if (typeof viz.used !== "number" || typeof viz.limit !== "number") return null;
+  return `${Math.min(viz.used, viz.limit)} / ${viz.limit} dream woodcuts used today`;
+}
 
 export default function DreamChat() {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -121,19 +136,22 @@ export default function DreamChat() {
         .then(async (res) => {
           if (!res.ok) {
             if (res.status === 429) {
-              const data = (await res.json().catch(() => ({}))) as { error?: string };
+              const data = (await res.json().catch(() => ({}))) as VisualizationResponse;
               setViz({
                 status: "limited",
                 message:
                   data.error ||
                   "Today's woodcut limit has been reached. Your written interpretation is still available.",
+                used: data.used,
+                limit: data.limit,
+                remaining: data.remaining,
               });
               return;
             }
             setViz({ status: "idle" });
             return;
           }
-          const data = (await res.json()) as { image?: string; brief?: string };
+          const data = (await res.json()) as VisualizationResponse;
           if (!data.image) {
             setViz({ status: "idle" });
             return;
@@ -142,6 +160,9 @@ export default function DreamChat() {
             status: "done",
             image: data.image,
             brief: data.brief || "",
+            used: data.used,
+            limit: data.limit,
+            remaining: data.remaining,
           });
         })
         .catch(() => setViz({ status: "idle" }));
@@ -238,6 +259,7 @@ export default function DreamChat() {
   const hasStarted = messages.length > 0 || streaming;
   const showVizInThread =
     viz.status !== "idle" && (Boolean(streaming) || messages.some((m) => m.role === "assistant"));
+  const vizUsage = formatVizUsage(viz);
 
   return (
     <div>
@@ -363,12 +385,14 @@ export default function DreamChat() {
                         Download image
                       </a>
                     </div>
+                    {vizUsage && <div className="dream-viz-usage">{vizUsage}</div>}
                   </figure>
                 )}
 
                 {viz.status === "limited" && (
                   <div className="dream-viz dream-viz-error">
                     <p>{viz.message}</p>
+                    {vizUsage && <div className="dream-viz-usage">{vizUsage}</div>}
                   </div>
                 )}
               </div>

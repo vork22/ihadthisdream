@@ -44,6 +44,7 @@ const IMAGE_SIZE = "816x816";
 const IMAGE_QUALITY = "low";
 const CACHE_VERSION = `${IMAGE_MODEL}:${IMAGE_SIZE}:${IMAGE_QUALITY}:woodcut-v1`;
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 30;
+const LIMIT_NAMESPACE = process.env.VISUALIZE_LIMIT_NAMESPACE || "v2";
 
 // ---------- style anchor: read once, cached across warm invocations ----------
 
@@ -116,13 +117,24 @@ function getRedis(): Redis | null {
 // An 11th+ dream in the same day just quietly skips the woodcut step rather
 // than surfacing an error (see DreamChat.tsx — non-OK responses silently
 // clear the loading state, preserving the reading experience).
+// VISUALIZE_LIMIT_NAMESPACE is a simple Redis namespace switch. Bumping it
+// clears all active counters immediately without deleting Redis data manually.
 const RATE_LIMIT_PER_DAY = 10;
-const IP_SALT = "ihtd-visualize-v1";
+const IP_SALT = `ihtd-visualize-${LIMIT_NAMESPACE}`;
 
 function getClientIp(request: Request): string {
-  const xff = request.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0].trim();
-  return request.headers.get("x-real-ip") || "unknown";
+  const candidates = [
+    request.headers.get("x-vercel-forwarded-for"),
+    request.headers.get("x-forwarded-for"),
+    request.headers.get("cf-connecting-ip"),
+    request.headers.get("true-client-ip"),
+    request.headers.get("x-real-ip"),
+  ];
+  for (const value of candidates) {
+    const ip = value?.split(",")[0]?.trim();
+    if (ip) return ip;
+  }
+  return "unknown";
 }
 
 function hashIp(ip: string): string {
@@ -173,15 +185,61 @@ async function getCachedVisualization(
 async function checkRateLimit(
   r: Redis | null,
   ipHash: string,
-): Promise<{ allowed: boolean; count: number }> {
-  if (!r) return { allowed: true, count: 0 };
-  const key = `visualize:ip:${ipHash}`;
+): Promise<{ allowed: boolean; count: number; limit: number; remaining: number }> {
+  if (!r) {
+    return {
+      allowed: true,
+      count: 0,
+      limit: RATE_LIMIT_PER_DAY,
+      remaining: RATE_LIMIT_PER_DAY,
+    };
+  }
+  const key = `visualize:${LIMIT_NAMESPACE}:ip:${ipHash}`;
   try {
+    const current = Number.parseInt((await r.get(key)) || "0", 10);
+    if (current >= RATE_LIMIT_PER_DAY) {
+      return {
+        allowed: false,
+        count: current,
+        limit: RATE_LIMIT_PER_DAY,
+        remaining: 0,
+      };
+    }
     const count = await r.incr(key);
     if (count === 1) await r.expire(key, 86400);
-    return { allowed: count <= RATE_LIMIT_PER_DAY, count };
+    return {
+      allowed: true,
+      count,
+      limit: RATE_LIMIT_PER_DAY,
+      remaining: Math.max(0, RATE_LIMIT_PER_DAY - count),
+    };
   } catch {
-    return { allowed: true, count: 0 };
+    return {
+      allowed: true,
+      count: 0,
+      limit: RATE_LIMIT_PER_DAY,
+      remaining: RATE_LIMIT_PER_DAY,
+    };
+  }
+}
+
+async function getUsage(
+  r: Redis | null,
+  ipHash: string,
+): Promise<{ used: number; limit: number; remaining: number }> {
+  if (!r) {
+    return { used: 0, limit: RATE_LIMIT_PER_DAY, remaining: RATE_LIMIT_PER_DAY };
+  }
+  try {
+    const key = `visualize:${LIMIT_NAMESPACE}:ip:${ipHash}`;
+    const used = Number.parseInt((await r.get(key)) || "0", 10);
+    return {
+      used,
+      limit: RATE_LIMIT_PER_DAY,
+      remaining: Math.max(0, RATE_LIMIT_PER_DAY - used),
+    };
+  } catch {
+    return { used: 0, limit: RATE_LIMIT_PER_DAY, remaining: RATE_LIMIT_PER_DAY };
   }
 }
 
@@ -230,22 +288,29 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Rate limit check BEFORE any paid API call
   const r = getRedis();
+  const ipHash = hashIp(getClientIp(request));
   const dreamHash = hashDream(dream);
   const cached = await getCachedVisualization(r, dreamHash);
   if (cached) {
+    const usage = await getUsage(r, ipHash);
     return json(200, {
       image: cached.image,
       brief: cached.brief,
       cached: true,
+      used: usage.used,
+      limit: usage.limit,
+      remaining: usage.remaining,
     });
   }
 
   // Only uncached generations count against the daily quota.
-  const ipHash = hashIp(getClientIp(request));
-  const { allowed, count } = await checkRateLimit(r, ipHash);
+  const { allowed, count, limit, remaining } = await checkRateLimit(r, ipHash);
   if (!allowed) {
     return json(429, {
       error: `You've reached today's limit of ${RATE_LIMIT_PER_DAY} visualizations. Please try again tomorrow.`,
+      used: count,
+      limit,
+      remaining,
     });
   }
 
@@ -313,7 +378,9 @@ export const POST: APIRoute = async ({ request }) => {
     return json(200, {
       image: `data:image/png;base64,${b64}`,
       brief,
-      remaining: Math.max(0, RATE_LIMIT_PER_DAY - count),
+      used: count,
+      limit,
+      remaining,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
