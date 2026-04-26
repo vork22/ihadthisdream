@@ -109,14 +109,14 @@ function getRedis(): Redis | null {
   return redisClient;
 }
 
-// ---------- rate limit: 3 visualizations per IP per 24 hours ----------
+// ---------- rate limit: 10 visualizations per IP per 24 hours ----------
 
-// Cap image generation at 3/day/IP. Interpretation (/api/interpret) has no
+// Cap image generation at 10/day/IP. Interpretation (/api/interpret) has no
 // such limit — dreamers can still get a written reading on every submission.
-// A 4th+ dream in the same day just quietly skips the woodcut step rather
+// An 11th+ dream in the same day just quietly skips the woodcut step rather
 // than surfacing an error (see DreamChat.tsx — non-OK responses silently
 // clear the loading state, preserving the reading experience).
-const RATE_LIMIT_PER_DAY = 3;
+const RATE_LIMIT_PER_DAY = 10;
 const IP_SALT = "ihtd-visualize-v1";
 
 function getClientIp(request: Request): string {
