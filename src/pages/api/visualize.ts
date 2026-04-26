@@ -32,9 +32,18 @@ const MASTER_PROMPT = (brief: string) => `A primitive medieval woodcut depicting
 
 Rough hand-carved linework with visible knife and chisel marks, thick bold outlines, slight asymmetry, a naive folk-art quality. Style of 14th–15th century block-book illustrations before Dürer's refinement — Biblia Pauperum, Ars Moriendi, early European block prints.
 
-Heavy black ink on a completely flat, solid, uniform warm cream background — exact color #fbf6ef (warm off-white parchment, slightly peachy, NOT white, NOT gray, NOT blue). The cream must fill the entire 1024x1024 canvas edge to edge with no gradient, no vignette, no aged-paper texture, no stains, no noise, no fiber, no scan artifacts — a perfectly flat solid field of color #fbf6ef. Simplified forms, chunky silhouette, short bold parallel strokes for shadow only — no fine crosshatching.
+Heavy black ink on a completely flat, solid, uniform warm cream background — exact color #fbf6ef (warm off-white parchment, slightly peachy, NOT white, NOT gray, NOT blue). The cream must fill the entire square canvas edge to edge with no gradient, no vignette, no aged-paper texture, no stains, no noise, no fiber, no scan artifacts — a perfectly flat solid field of color #fbf6ef. Simplified forms, chunky silhouette, short bold parallel strokes for shadow only — no fine crosshatching.
 
 Single cohesive scene centered with generous margin around it. Absolutely no decorative border, no frame, no rectangle outline, no color in the subject (only black ink), no text, no lettering, no signature, no watermark. Match the linework weight, chisel quality, and primitive mood of the attached reference image.`;
+
+const IMAGE_MODEL = "gpt-image-2";
+// GPT Image 2 accepts custom square sizes when both edges are multiples of 16
+// and total pixels are >= 655,360. 816^2 is the smallest square over that
+// threshold, which is faster/cheaper than 1024 while still large enough for UI.
+const IMAGE_SIZE = "816x816";
+const IMAGE_QUALITY = "low";
+const CACHE_VERSION = `${IMAGE_MODEL}:${IMAGE_SIZE}:${IMAGE_QUALITY}:woodcut-v1`;
+const CACHE_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 // ---------- style anchor: read once, cached across warm invocations ----------
 
@@ -124,6 +133,43 @@ function hashIp(ip: string): string {
     .slice(0, 16);
 }
 
+function normalizeDreamForCache(dream: string): string {
+  return dream.trim().replace(/\s+/g, " ");
+}
+
+function hashDream(dream: string): string {
+  return crypto
+    .createHash("sha256")
+    .update(`${CACHE_VERSION}\n${normalizeDreamForCache(dream)}`)
+    .digest("hex")
+    .slice(0, 32);
+}
+
+type CachedVisualization = {
+  image: string;
+  brief: string;
+  cachedAt: number;
+};
+
+async function getCachedVisualization(
+  r: Redis | null,
+  dreamHash: string,
+): Promise<CachedVisualization | null> {
+  if (!r) return null;
+  try {
+    const raw = await r.get(`visualize:cache:${dreamHash}`);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as CachedVisualization;
+    if (typeof cached.image !== "string" || typeof cached.brief !== "string") {
+      return null;
+    }
+    await r.incr("visualize:counts:cache_hits");
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
 async function checkRateLimit(
   r: Redis | null,
   ipHash: string,
@@ -184,6 +230,17 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Rate limit check BEFORE any paid API call
   const r = getRedis();
+  const dreamHash = hashDream(dream);
+  const cached = await getCachedVisualization(r, dreamHash);
+  if (cached) {
+    return json(200, {
+      image: cached.image,
+      brief: cached.brief,
+      cached: true,
+    });
+  }
+
+  // Only uncached generations count against the daily quota.
   const ipHash = hashIp(getClientIp(request));
   const { allowed, count } = await checkRateLimit(r, ipHash);
   if (!allowed) {
@@ -216,11 +273,11 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     const imageResp = await openai.images.edit({
-      model: "gpt-image-2",
+      model: IMAGE_MODEL,
       image: anchor,
       prompt: MASTER_PROMPT(brief),
-      size: "1024x1024",
-      quality: "medium",
+      size: IMAGE_SIZE,
+      quality: IMAGE_QUALITY,
       n: 1,
     });
 
@@ -232,6 +289,15 @@ export const POST: APIRoute = async ({ request }) => {
     if (r) {
       try {
         const pipe = r.pipeline();
+        pipe.setex(
+          `visualize:cache:${dreamHash}`,
+          CACHE_TTL_SECONDS,
+          JSON.stringify({
+            image: `data:image/png;base64,${b64}`,
+            brief,
+            cachedAt: Date.now(),
+          } satisfies CachedVisualization),
+        );
         pipe.incr("visualize:counts:total");
         pipe.lpush(
           "visualize:briefs",

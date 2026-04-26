@@ -739,6 +739,9 @@ h1.hero-title em {
 .chat-assistant {
   justify-content: flex-start;
 }
+.chat-viz {
+  margin-top: -6px;
+}
 .chat-bubble-user {
   background: var(--bg-tint);
   color: var(--ink);
@@ -841,7 +844,7 @@ h1.hero-title em {
   white-space: nowrap;
 }
 .dream-viz {
-  margin: 20px 0 12px;
+  margin: 0;
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -851,8 +854,11 @@ h1.hero-title em {
   align-items: center;
   gap: 14px;
 }
+.chat-viz .dream-viz {
+  width: min(92%, 500px);
+}
 .dream-viz-loading {
-  min-height: 180px;
+  min-height: 132px;
   justify-content: center;
 }
 .dream-viz-spinner {
@@ -874,13 +880,11 @@ h1.hero-title em {
 }
 .dream-viz-done {
   padding: 24px 20px 20px;
-  margin-top: 24px;
-  margin-bottom: 0;
 }
 .dream-viz-img {
   display: block;
   width: 100%;
-  max-width: 520px;
+  max-width: 420px;
   height: auto;
   border-radius: 4px;
   mix-blend-mode: multiply;

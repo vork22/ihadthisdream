@@ -82,7 +82,7 @@ export default function DreamChat() {
       const delta = rect.bottom - targetBottom;
       window.scrollBy({ top: delta, behavior: "smooth" });
     }
-  }, [messages, streaming]);
+  }, [messages, streaming, viz]);
 
   // Reset the "user scrolled" flag whenever a new exchange begins.
   useEffect(() => {
@@ -225,6 +225,8 @@ export default function DreamChat() {
   };
 
   const hasStarted = messages.length > 0 || streaming;
+  const showVizInThread =
+    viz.status !== "idle" && (Boolean(streaming) || messages.some((m) => m.role === "assistant"));
 
   return (
     <div>
@@ -315,6 +317,45 @@ export default function DreamChat() {
                 </div>
               </div>
             )}
+            {showVizInThread && (
+              <div
+                className="chat-msg chat-assistant chat-viz"
+                ref={!streaming ? latestMsgRef : null}
+              >
+                {viz.status === "loading" && (
+                  <div className="dream-viz dream-viz-loading">
+                    <div className="dream-viz-spinner" aria-hidden="true" />
+                    <div className="dream-viz-caption">
+                      illuminating your dream…
+                    </div>
+                  </div>
+                )}
+
+                {viz.status === "done" && (
+                  <figure className="dream-viz dream-viz-done">
+                    <img
+                      className="dream-viz-img"
+                      src={viz.image}
+                      alt={viz.brief ? `Woodcut: ${viz.brief}` : "Woodcut of your dream"}
+                    />
+                    {viz.brief && (
+                      <figcaption className="dream-viz-brief">
+                        <em>{viz.brief}</em>
+                      </figcaption>
+                    )}
+                    <div className="dream-viz-actions">
+                      <a
+                        className="btn btn-ghost"
+                        href={viz.image}
+                        download={`dream-${new Date().toISOString().slice(0, 10)}.png`}
+                      >
+                        Download image
+                      </a>
+                    </div>
+                  </figure>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Suggestion pills — above the input when the latest assistant
@@ -377,40 +418,6 @@ export default function DreamChat() {
               </svg>
             </button>
           </div>
-
-          {viz.status === "loading" &&
-            messages.filter((m) => m.role === "assistant").length >= 1 && (
-              <div className="dream-viz dream-viz-loading">
-                <div className="dream-viz-spinner" aria-hidden="true" />
-                <div className="dream-viz-caption">
-                  illuminating your dream…
-                </div>
-              </div>
-            )}
-
-          {viz.status === "done" && (
-            <figure className="dream-viz dream-viz-done">
-              <img
-                className="dream-viz-img"
-                src={viz.image}
-                alt={viz.brief ? `Woodcut: ${viz.brief}` : "Woodcut of your dream"}
-              />
-              {viz.brief && (
-                <figcaption className="dream-viz-brief">
-                  <em>{viz.brief}</em>
-                </figcaption>
-              )}
-              <div className="dream-viz-actions">
-                <a
-                  className="btn btn-ghost"
-                  href={viz.image}
-                  download={`dream-${new Date().toISOString().slice(0, 10)}.png`}
-                >
-                  Download image
-                </a>
-              </div>
-            </figure>
-          )}
 
           {messages.filter((m) => m.role === "assistant").length >= 1 && (
             <div className="chat-actions">
