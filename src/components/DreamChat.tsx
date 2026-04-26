@@ -46,7 +46,8 @@ function parseModelResponse(raw: string): { message: string; suggestions: string
 type Visualization =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "done"; image: string; brief: string };
+  | { status: "done"; image: string; brief: string }
+  | { status: "limited"; message: string };
 
 export default function DreamChat() {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -119,6 +120,16 @@ export default function DreamChat() {
       })
         .then(async (res) => {
           if (!res.ok) {
+            if (res.status === 429) {
+              const data = (await res.json().catch(() => ({}))) as { error?: string };
+              setViz({
+                status: "limited",
+                message:
+                  data.error ||
+                  "Today's woodcut limit has been reached. Your written interpretation is still available.",
+              });
+              return;
+            }
             setViz({ status: "idle" });
             return;
           }
@@ -353,6 +364,12 @@ export default function DreamChat() {
                       </a>
                     </div>
                   </figure>
+                )}
+
+                {viz.status === "limited" && (
+                  <div className="dream-viz dream-viz-error">
+                    <p>{viz.message}</p>
+                  </div>
                 )}
               </div>
             )}
