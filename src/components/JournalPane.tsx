@@ -28,7 +28,22 @@ export default function JournalPane() {
 
   const load = () => {
     try {
-      setEntries(JSON.parse(localStorage.getItem("ihtd_journal") || "[]"));
+      const raw = JSON.parse(localStorage.getItem("ihtd_journal") || "[]") as JournalEntry[];
+      if (!Array.isArray(raw)) {
+        setEntries([]);
+        return;
+      }
+      let dirty = false;
+      const cleaned = raw.map((e) => {
+        if (typeof e.analysis !== "string") return e;
+        const next = sanitizeInterpreterHtml(e.analysis);
+        if (next !== e.analysis) dirty = true;
+        return { ...e, analysis: next };
+      });
+      if (dirty) {
+        localStorage.setItem("ihtd_journal", JSON.stringify(cleaned));
+      }
+      setEntries(cleaned);
     } catch {
       setEntries([]);
     }

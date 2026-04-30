@@ -225,7 +225,7 @@ export default function DreamChat() {
       .map((m) =>
         m.role === "user"
           ? `<p class="journal-you"><em>You:</em> ${m.content}</p>`
-          : `<div class="journal-them">${m.content}</div>`,
+          : `<div class="journal-them">${sanitizeInterpreterHtml(m.content)}</div>`,
       )
       .join("");
     const entry: Record<string, unknown> = {
