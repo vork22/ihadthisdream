@@ -1060,6 +1060,41 @@ h1.hero-title em {
   filter: contrast(1.02);
 }
 
+/* Narrow screens: inline thumbnail + copy — avoids a tall empty plate around a small woodcut */
+@media (max-width: 559px) {
+  .dream-card--with-etching {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .dream-card--with-etching .dream-card-visual {
+    aspect-ratio: auto;
+    width: clamp(92px, 25vw, 112px);
+    flex: 0 0 clamp(92px, 25vw, 112px);
+    min-height: 0;
+    align-self: stretch;
+    border-bottom: none;
+    border-right: 1px solid var(--line);
+    padding: 10px 8px;
+    background: var(--bg-tint);
+  }
+  .dream-card--with-etching .dream-card-visual img {
+    max-width: 100%;
+    max-height: 100px;
+    margin: 0 auto;
+  }
+  .dream-card--with-etching .dream-card-body {
+    padding: 16px 18px 18px;
+    min-width: 0;
+  }
+  .dream-card--with-etching .dream-card-title {
+    font-size: clamp(18px, 4.6vw, 22px);
+  }
+  .dream-card--with-etching .dream-card-one {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+}
+
 .dream-card-body {
   padding: 22px 22px 26px;
   display: flex;
@@ -1153,6 +1188,17 @@ h1.hero-title em {
   max-width: min(100%, 420px);
   max-height: 280px;
   object-fit: contain;
+}
+
+@media (max-width: 559px) {
+  .dream-hero-etching {
+    padding: 14px 16px;
+    margin-bottom: 22px;
+    border-radius: 12px;
+  }
+  .dream-hero-etching img {
+    max-height: 200px;
+  }
 }
 
 /* =========================================================
