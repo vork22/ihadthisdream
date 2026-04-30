@@ -7,6 +7,7 @@ import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getCollection } from "astro:content";
 import { graph, breadcrumbSchema, collectionPageSchema } from "~/lib/schema";
 import { pageTitle, dreamPath } from "~/lib/site";
+import { resolveDreamEtching } from "~/lib/dreamEtching";
 
 const dreams = await getCollection("dreams");
 dreams.sort((a, b) => a.data.title.localeCompare(b.data.title));
@@ -64,25 +65,41 @@ const jsonLd = graph(
       </div>
     )}
 
-    <div class="dreams-grid">
-      {dreams.map((d, i) => (
-        <a
-          href={dreamPath(d.data.slug)}
-          class="dream-card"
-          data-traditions={d.data.traditions.join("|").toLowerCase()}
-        >
-          <div class="dream-card-num">№ {String(i + 1).padStart(2, "0")}</div>
-          <div class="dream-card-title">{d.data.title}</div>
-          <div class="dream-card-one">{d.data.excerpt}</div>
-          {d.data.traditions.length > 0 && (
-            <div class="dream-card-themes">
-              {d.data.traditions.slice(0, 3).map((t) => (
-                <span>{t}</span>
-              ))}
+    <div class="dreams-grid--gallery">
+      {dreams.map((d) => {
+        const etch = resolveDreamEtching(d.data.slug, d.data.etching);
+        return (
+          <a
+            href={dreamPath(d.data.slug)}
+            class="dream-card dream-card--with-etching"
+            data-traditions={d.data.traditions.join("|").toLowerCase()}
+          >
+            {etch ? (
+              <div class="dream-card-visual">
+                <img
+                  src={etch}
+                  alt={`Woodcut illustration for dreams of ${d.data.title}`}
+                  loading="lazy"
+                  decoding="async"
+                  width="320"
+                  height="256"
+                />
+              </div>
+            ) : null}
+            <div class="dream-card-body">
+              <div class="dream-card-title">{d.data.title}</div>
+              <div class="dream-card-one">{d.data.excerpt}</div>
+              {d.data.traditions.length > 0 && (
+                <div class="dream-card-themes">
+                  {d.data.traditions.slice(0, 3).map((t) => (
+                    <span>{t}</span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </a>
-      ))}
+          </a>
+        );
+      })}
     </div>
   </main>
 

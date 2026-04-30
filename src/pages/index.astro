@@ -8,6 +8,7 @@ import SymbolGallery from "~/components/SymbolGallery.astro";
 import DreamChat from "~/components/DreamChat.tsx";
 import JournalPane from "~/components/JournalPane.tsx";
 import { getCollection } from "astro:content";
+import { resolveDreamEtching } from "~/lib/dreamEtching";
 
 const commonDreams = await getCollection("dreams");
 commonDreams.sort((a, b) => a.data.title.localeCompare(b.data.title));
@@ -62,24 +63,41 @@ const letters = Array.from(
             from multiple traditions and points to related symbols.
           </p>
         </div>
-        <div class="dreams-grid">
+        <div class="dreams-grid--gallery">
           {
-            commonDreams.slice(0, 24).map((d, i) => (
-              <a href={`/dreams/${d.data.slug}`} class="dream-card">
-                <div class="dream-card-num">
-                  № {String(i + 1).padStart(2, "0")}
-                </div>
-                <div class="dream-card-title">{d.data.title}</div>
-                <div class="dream-card-one">{d.data.excerpt}</div>
-                {d.data.traditions.length > 0 && (
-                  <div class="dream-card-themes">
-                    {d.data.traditions.slice(0, 3).map((t) => (
-                      <span>{t}</span>
-                    ))}
+            commonDreams.slice(0, 24).map((d) => {
+              const etch = resolveDreamEtching(d.data.slug, d.data.etching);
+              return (
+                <a
+                  href={`/dreams/${d.data.slug}`}
+                  class="dream-card dream-card--with-etching"
+                >
+                  {etch ? (
+                    <div class="dream-card-visual">
+                      <img
+                        src={etch}
+                        alt={`Woodcut illustration for dreams of ${d.data.title}`}
+                        loading="lazy"
+                        decoding="async"
+                        width="320"
+                        height="256"
+                      />
+                    </div>
+                  ) : null}
+                  <div class="dream-card-body">
+                    <div class="dream-card-title">{d.data.title}</div>
+                    <div class="dream-card-one">{d.data.excerpt}</div>
+                    {d.data.traditions.length > 0 && (
+                      <div class="dream-card-themes">
+                        {d.data.traditions.slice(0, 3).map((t) => (
+                          <span>{t}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </a>
-            ))
+                </a>
+              );
+            })
           }
         </div>
         <p style="text-align: center; margin-top: 32px;">

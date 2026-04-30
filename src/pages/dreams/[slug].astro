@@ -16,6 +16,7 @@ import {
   articleSchema,
   faqSchema,
 } from "~/lib/schema";
+import { resolveDreamEtching } from "~/lib/dreamEtching";
 
 export async function getStaticPaths() {
   const dreams = await getCollection("dreams");
@@ -91,13 +92,18 @@ const breadcrumbs = [
   { name: dream.data.title, url },
 ];
 
+const etchingResolved = resolveDreamEtching(
+  dream.data.slug,
+  dream.data.etching,
+);
+
 const jsonLd = graph(
   breadcrumbSchema(breadcrumbs),
   articleSchema({
     headline: `${dream.data.title} Dream Meaning`,
     description: metaDescription,
     url,
-    image: dream.data.etching,
+    image: etchingResolved,
     datePublished: dream.data.datePublished,
     dateModified: dream.data.dateModified ?? dream.data.datePublished,
     keywords: [
@@ -119,7 +125,7 @@ const jsonLd = graph(
 <Base
   title={title}
   description={metaDescription}
-  ogImage={dream.data.etching ?? undefined}
+  ogImage={etchingResolved ?? undefined}
   ogType="article"
   jsonLd={jsonLd}
   publishedTime={dream.data.datePublished}
@@ -138,6 +144,22 @@ const jsonLd = graph(
     <h1 style="font-size: clamp(36px, 5vw, 56px); margin-bottom: 20px; text-wrap: balance;">
       {dream.data.title}
     </h1>
+
+    {
+      etchingResolved && (
+        <figure class="dream-hero-etching">
+          <img
+            src={etchingResolved}
+            alt={`Woodcut illustration for dreams of ${dream.data.title}`}
+            loading="eager"
+            decoding="async"
+            width="420"
+            height="336"
+          />
+        </figure>
+      )
+    }
+
     <p
       style="font-family: var(--display); font-size: 22px; font-style: italic; color: var(--peach-deep); margin-bottom: 24px; text-wrap: pretty;"
     >
@@ -233,9 +255,9 @@ const jsonLd = graph(
       siblingDreams.length > 0 && (
         <div style="margin-top: 40px;">
           <div class="tweak-label" style="margin-bottom: 16px;">Other common dreams</div>
-          <div class="dreams-grid">
+          <div class="dream-siblings-grid">
             {siblingDreams.map((d) => (
-              <a href={dreamPath(d.data.slug)} class="dream-card">
+              <a href={dreamPath(d.data.slug)} class="dream-card dream-card--compact">
                 <div class="dream-card-title">{d.data.title}</div>
                 <div class="dream-card-one">{d.data.excerpt}</div>
               </a>

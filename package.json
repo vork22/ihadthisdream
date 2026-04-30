@@ -11,6 +11,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "generate:symbols": "node scripts/generate-symbol-images.mjs",
+    "generate:dreams": "node scripts/generate-dream-images.mjs",
     "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {

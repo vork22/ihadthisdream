@@ -4,6 +4,7 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
 import { absUrl, symbolPath, dreamPath } from "~/lib/site";
+import { resolveDreamEtching } from "~/lib/dreamEtching";
 
 export const GET: APIRoute = async () => {
   const symbols = await getCollection("symbols");
@@ -35,9 +36,10 @@ export const GET: APIRoute = async () => {
   }
 
   for (const d of dreams) {
-    if (!d.data.etching) continue;
+    const etching = resolveDreamEtching(d.data.slug, d.data.etching);
+    if (!etching) continue;
     const url = absUrl(dreamPath(d.data.slug));
-    const imageUrl = absUrl(d.data.etching);
+    const imageUrl = absUrl(etching);
     xmlParts.push("  <url>");
     xmlParts.push(`    <loc>${escape(url)}</loc>`);
     xmlParts.push("    <image:image>");
