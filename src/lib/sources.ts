@@ -94,6 +94,14 @@ export const SOURCES: Record<string, PrimarySource> = {
     year: "1916",
     translator: "James Strachey",
   },
+  campbell_hero_thousand: {
+    id: "campbell_hero_thousand",
+    type: "Book",
+    title: "The Hero with a Thousand Faces",
+    author: "Joseph Campbell",
+    year: "1949",
+    publisher: "Pantheon Books",
+  },
   hillman_dream_underworld: {
     id: "hillman_dream_underworld",
     type: "Book",

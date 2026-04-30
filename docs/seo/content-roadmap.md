@@ -1,53 +1,53 @@
 # Content Roadmap (post-launch expansion)
 
 This file tracks content the SEO plan calls for that has not yet shipped.
-The site already has the 24 dream pages, 22 expanded flagship symbol
-pages, all 163 symbol entries with structured frontmatter, and 16
-shipped pillar articles. The remaining items below are the next-best
-content investments, in priority order.
+The site already has the 24 dream pages, 23 expanded flagship symbol
+pages, all 163 symbol entries with structured frontmatter, and 21 pillar
+articles. The remaining items below are the next-best content
+investments, in priority order.
 
 ---
 
 ## Phase 3a: remaining flagship symbols (~140)
 
-The 22 highest-priority flagship symbols are expanded in full. The
-remaining ~140 symbol entries have programmatically generated
+The 23 flagship symbols (tower now included among the expanded set) ship long-form bodies; the remaining ~140 symbol entries have programmatically generated
 frontmatter (metaDescription, tldr, citations, journal prompts, FAQs,
 date metadata) but the *body* content is still the original short
 paragraph.
 
-**Priority queue** (next 30 to expand to 600+ words each):
+**Priority queue** (next to expand to 600+ words each):
 
-1. tower
-2. cave
-3. labyrinth
-4. wheel
-5. star
-6. river
-7. forest
-8. desert
-9. island
-10. window
-11. clock
-12. key
-13. mask
-14. crown
-15. throne
-16. king
-17. queen
-18. mother
-19. father
-20. trickster
-21. hero
-22. self
-23. persona
-24. cross
-25. dragon
-26. lion
-27. wolf
-28. bird
-29. fish
-30. horse
+1. cave
+2. labyrinth
+3. wheel
+4. star
+5. river
+6. forest
+7. desert
+8. island
+9. window
+10. clock
+11. key
+12. mask
+13. crown
+14. throne
+15. king
+16. queen
+17. mother
+18. father
+19. trickster
+20. hero
+21. self
+22. persona
+23. cross
+24. dragon
+25. lion
+26. wolf
+27. bird
+28. fish
+29. horse
+
+_(Tower completed 2026-04-29.)_
 
 **Method**: use the same template as the existing flagship symbols
 (snake, water, fire). About 600 words each, 5 traditions, 4–6 FAQs,
@@ -56,30 +56,19 @@ dreams.
 
 ---
 
-## Phase 3c: remaining pillar articles (9)
+## Phase 3c: remaining pillar articles (6)
 
-Sixteen pillar articles are shipped. The remaining nine — at the same
-target length (1,500–3,500 words) — are:
+Twenty-one pillar articles are shipped (**dream-symbols-across-cultures**,
+**the-self-archetype-and-the-mandala**, **dreams-and-pregnancy**, and the earlier
+pillars listed on `/articles`). The remaining six — same target length
+(1,500–3,500 words) — are:
 
-1. **dream-symbols-across-cultures** — comparative essay focused on
-   specific symbols (water, snake, mother, sun, etc.) across five
-   traditions. Big SEO target.
-2. **the-self-archetype-and-the-mandala** — Jung's most numinous
-   concept, its appearance in dreams, the mandala motif.
-3. **the-persona-archetype-and-the-mask** — social mask, role-related
-   dreams, the cost of identification with the persona.
-4. **the-trickster-archetype-in-dreams** — boundary-crosser, mischief,
-   illumination by rule-breaking. Hermes, Coyote, Loki.
-5. **the-hero-archetype-in-dreams** — Campbell + Jung CW 5; quest,
-   descent, return. Often searched.
-6. **the-great-mother-and-her-shadow** — extending the symbol page
-   into a full archetypal essay.
-7. **the-wise-old-man-and-anima-sapientiae** — extending the symbol
-   page; intersects with anima/animus.
-8. **dreams-and-creativity** — Coleridge, Kekulé, Mendeleev, Mary
-   Shelley; the cross-disciplinary case for incubation.
-9. **dreams-and-pregnancy** — physiological + psychological, common
-   patterns; complements the dreams/pregnancy entry.
+1. **the-persona-archetype-and-the-mask** — social mask, role-related dreams.
+2. **the-trickster-archetype-in-dreams** — Hermes, Coyote, Loki; rule-breaking illumination.
+3. **the-hero-archetype-in-dreams** — quest, descent, return; Jung CW 5 + Campbell.
+4. **the-great-mother-and-her-shadow** — extending the Great Mother symbol page into a pillar.
+5. **the-wise-old-man-and-anima-sapientiae** — extending the Wise Old Man symbol arc.
+6. **dreams-and-creativity** — Coleridge, Kekulé, incubation vs overclaiming biography.
 
 **Method**: same as shipped pillars. 1,500–3,500 words. Open with a
 working definition. Cover the major traditions (when applicable).

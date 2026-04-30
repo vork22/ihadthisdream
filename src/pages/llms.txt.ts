@@ -39,7 +39,7 @@ export const GET: APIRoute = async () => {
   const articlesList = sortByTerm(articles as any[])
     .map(
       (a: any) =>
-        `- [${a.data.headline ?? a.data.title}](${SITE.url}${articlePath(aSlug(a))}): ${a.data.metaDescription ?? ""}`,
+        `- [${a.data.headline ?? a.data.title}](${SITE.url}${articlePath(aSlug(a))}): ${("metaDescription" in a.data ? (a.data as { metaDescription?: string }).metaDescription : undefined) ?? a.data.description}`,
     )
     .join("\n");
 
