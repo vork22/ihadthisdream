@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { sanitizeInterpreterHtml } from "~/lib/sanitizeInterpreterHtml";
 
 /**
  * Multi-turn Dream Analysis chat — the interpreter asks follow-up questions,
@@ -178,7 +179,7 @@ export default function DreamChat() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { content?: string };
       const parsed = parseModelResponse(data.content || "");
-      const full = parsed.message || "<p>…</p>";
+      const full = sanitizeInterpreterHtml(parsed.message || "<p>…</p>");
       const suggestions = parsed.suggestions || [];
 
       let i = 0;
@@ -371,11 +372,6 @@ export default function DreamChat() {
                       src={viz.image}
                       alt={viz.brief ? `Woodcut: ${viz.brief}` : "Woodcut of your dream"}
                     />
-                    {viz.brief && (
-                      <figcaption className="dream-viz-brief">
-                        <em>{viz.brief}</em>
-                      </figcaption>
-                    )}
                     <div className="dream-viz-actions">
                       <a
                         className="btn btn-ghost"

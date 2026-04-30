@@ -3,18 +3,36 @@ import Base from "~/layouts/Base.astro";
 import SiteNav from "~/components/SiteNav.astro";
 import SiteFooter from "~/components/SiteFooter.astro";
 import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import TLDR from "~/components/TLDR.astro";
+import CitedWorks from "~/components/CitedWorks.astro";
+import PageFAQ from "~/components/PageFAQ.astro";
+import JournalPrompts from "~/components/JournalPrompts.astro";
 import { getCollection, render } from "astro:content";
+import { dreamTitle, dreamPath, symbolPath } from "~/lib/site";
+import {
+  graph,
+  breadcrumbSchema,
+  articleSchema,
+  faqSchema,
+} from "~/lib/schema";
 
 export async function getStaticPaths() {
   const dreams = await getCollection("dreams");
-  return dreams.map((d) => ({ params: { slug: d.data.slug }, props: { dream: d } }));
+  return dreams.map((d) => ({
+    params: { slug: d.data.slug },
+    props: { dream: d },
+  }));
 }
 
 const { dream } = Astro.props;
 const { Content } = await render(dream);
 
-const title = `${dream.data.title} — Dream Meaning & Symbolism | I Had This Dream`;
-const description = dream.data.excerpt;
+const url = dreamPath(dream.data.slug);
+const title = dreamTitle(dream.data.title);
+const metaDescription =
+  dream.data.metaDescription ??
+  `${dream.data.title} dream meaning — what it symbolizes, why it recurs, and how Jung, Freud, Vedic, Sufi & Indigenous traditions read it. Sourced, scholarly, free.`;
 
 // Auto-match symbols mentioned in this dream's body/title/excerpt so we can
 // illustrate the entry with the right woodcuts, even when the frontmatter's
@@ -53,31 +71,75 @@ const dreamSymbols = matched
   .map((m) => m.entry)
   .slice(0, 8);
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  headline: dream.data.title,
-  description,
-  mainEntityOfPage: `https://ihadthisdream.com/dreams/${dream.data.slug}`,
-  about: dream.data.traditions.map((t) => ({
-    "@type": "Thing",
-    name: `${t} dream tradition`,
-  })),
-};
+// Sibling dreams to recover the user — top 3 by tradition overlap.
+const allDreams = await getCollection("dreams");
+const siblingDreams = allDreams
+  .filter((d) => d.data.slug !== dream.data.slug)
+  .map((d) => ({
+    d,
+    overlap: d.data.traditions.filter((t) =>
+      dream.data.traditions.includes(t),
+    ).length,
+  }))
+  .sort((a, b) => b.overlap - a.overlap)
+  .slice(0, 3)
+  .map((x) => x.d);
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Common dreams", url: "/dreams" },
+  { name: dream.data.title, url },
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  articleSchema({
+    headline: `${dream.data.title} Dream Meaning`,
+    description: metaDescription,
+    url,
+    image: dream.data.etching,
+    datePublished: dream.data.datePublished,
+    dateModified: dream.data.dateModified ?? dream.data.datePublished,
+    keywords: [
+      `${dream.data.title.toLowerCase()} dream meaning`,
+      `dream of ${dream.data.title.toLowerCase()}`,
+      `what it means to dream about ${dream.data.title.toLowerCase()}`,
+      ...dream.data.traditions,
+    ],
+    articleSection: "Common Dreams",
+    about: dream.data.traditions.map((t) => `${t} dream tradition`),
+    citationIds: dream.data.citations,
+  }),
+  dream.data.faqs && dream.data.faqs.length > 0
+    ? faqSchema(dream.data.faqs)
+    : null,
+);
 ---
 
-<Base title={title} description={description} jsonLd={jsonLd}>
+<Base
+  title={title}
+  description={metaDescription}
+  ogImage={dream.data.etching ?? undefined}
+  ogType="article"
+  jsonLd={jsonLd}
+  publishedTime={dream.data.datePublished}
+  modifiedTime={dream.data.dateModified ?? dream.data.datePublished}
+  articleSection="Common Dreams"
+  keywords={[
+    `${dream.data.title.toLowerCase()} dream meaning`,
+    `dream of ${dream.data.title.toLowerCase()}`,
+  ]}
+>
   <SiteNav active="common" />
 
-  <main class="container" style="padding-top: 56px; padding-bottom: 96px; max-width: 760px;">
-    <div class="eyebrow" style="justify-content: flex-start;">
-      <a href="/#common" style="color: inherit;">Common dreams</a>
-    </div>
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
     <h1 style="font-size: clamp(36px, 5vw, 56px); margin-bottom: 20px; text-wrap: balance;">
       {dream.data.title}
     </h1>
     <p
-      style="font-family: var(--display); font-size: 22px; font-style: italic; color: var(--peach-deep); margin-bottom: 32px; text-wrap: pretty;"
+      style="font-family: var(--display); font-size: 22px; font-style: italic; color: var(--peach-deep); margin-bottom: 24px; text-wrap: pretty;"
     >
       {dream.data.excerpt}
     </p>
@@ -90,9 +152,54 @@ const jsonLd = {
       )
     }
 
+    {
+      dream.data.tldr && (
+        <TLDR>
+          {dream.data.tldr}
+        </TLDR>
+      )
+    }
+
     <div class="analysis-body" style="font-size: 19px;">
       <Content />
     </div>
+
+    {
+      dream.data.variations && dream.data.variations.length > 0 && (
+        <section style="margin-top: 48px;">
+          <h2 style="font-family: var(--display); font-size: 28px; margin-bottom: 16px;">
+            If the dream changes…
+          </h2>
+          <ul style="list-style: none; padding: 0; display: grid; gap: 12px;">
+            {dream.data.variations.map((v) => (
+              <li style="padding: 14px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg);">
+                <strong style="color: var(--lav-deep); font-family: var(--display);">
+                  {v.name}.
+                </strong>{" "}
+                <span style="color: var(--ink-soft);">{v.summary}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      dream.data.whenToSeekHelp && (
+        <aside class="seek-help" aria-label="When to seek professional support">
+          <strong>When to take it seriously.</strong> {dream.data.whenToSeekHelp}
+        </aside>
+      )
+    }
+
+    {
+      dream.data.journalPrompts && dream.data.journalPrompts.length > 0 && (
+        <JournalPrompts
+          prompts={dream.data.journalPrompts}
+          term={dream.data.title}
+        />
+      )
+    }
 
     {
       dreamSymbols.length > 0 && (
@@ -101,13 +208,13 @@ const jsonLd = {
           <div class="related-symbol-grid">
             {dreamSymbols.map((r) => (
               <a
-                href={`/symbols/${r.data.letter.toLowerCase()}/${r.id.replace(/\.md$/, "")}`}
+                href={symbolPath(r.data.letter, r.id.replace(/\.md$/, ""))}
                 class="related-symbol"
               >
                 {r.data.image && (
                   <img
                     src={r.data.image}
-                    alt=""
+                    alt={`Woodcut of ${r.data.term}`}
                     loading="lazy"
                     decoding="async"
                     width="72"
@@ -122,16 +229,61 @@ const jsonLd = {
       )
     }
 
-    <div style="margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line);">
+    {
+      siblingDreams.length > 0 && (
+        <div style="margin-top: 40px;">
+          <div class="tweak-label" style="margin-bottom: 16px;">Other common dreams</div>
+          <div class="dreams-grid">
+            {siblingDreams.map((d) => (
+              <a href={dreamPath(d.data.slug)} class="dream-card">
+                <div class="dream-card-title">{d.data.title}</div>
+                <div class="dream-card-one">{d.data.excerpt}</div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    {
+      dream.data.faqs && dream.data.faqs.length > 0 && (
+        <PageFAQ items={dream.data.faqs} />
+      )
+    }
+
+    {
+      dream.data.citations && dream.data.citations.length > 0 && (
+        <CitedWorks ids={dream.data.citations} />
+      )
+    }
+
+    <div style="margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line); display: flex; gap: 16px; flex-wrap: wrap;">
       <a href="/#interpret" class="btn">
         Interpret your own dream
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M1 7h12m0 0L8 2m5 5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
         </svg>
       </a>
+      <a href="/methodology" class="btn btn-ghost">How these readings are sourced</a>
     </div>
   </main>
 
   <SiteFooter />
   <Tweaks />
 </Base>
+
+<style>
+  .seek-help {
+    margin-top: 32px;
+    padding: 16px 20px;
+    border-left: 3px solid var(--peach-deep);
+    background: var(--bg-tint);
+    border-radius: 6px;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .seek-help strong {
+    color: var(--peach-deep);
+  }
+</style>

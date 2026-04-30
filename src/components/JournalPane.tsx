@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { sanitizeInterpreterHtml } from "~/lib/sanitizeInterpreterHtml";
 
 type JournalEntry = {
   id: number;
@@ -146,24 +147,13 @@ export default function JournalPane() {
                           mixBlendMode: "multiply",
                         }}
                       />
-                      {e.imageBrief && (
-                        <figcaption
-                          style={{
-                            marginTop: 8,
-                            fontFamily: "var(--display)",
-                            fontStyle: "italic",
-                            fontSize: 14,
-                            color: "var(--ink-soft)",
-                          }}
-                        >
-                          {e.imageBrief}
-                        </figcaption>
-                      )}
                     </figure>
                   )}
                   <div
                     className="analysis-body"
-                    dangerouslySetInnerHTML={{ __html: e.analysis }}
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeInterpreterHtml(e.analysis),
+                    }}
                   />
                   <div style={{ marginTop: 16 }}>
                     <button

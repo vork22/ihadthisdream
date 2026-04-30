@@ -1,4 +1,75 @@
+# I Had This Dream — robots.txt
+# Open to search-engine and LLM crawlers. Internal QC pages and the
+# server endpoints are excluded.
+
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /symbols-compare
+Disallow: /og/
 
+# Explicit allowlist for the major LLM and AI-search crawlers. Many sites
+# block these by default; we want our cited content surfaced in AI answers.
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /symbols-compare
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /symbols-compare
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /symbols-compare
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /symbols-compare
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+
+User-agent: Bytespider
+Allow: /
+Disallow: /api/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /api/
+
+User-agent: Diffbot
+Allow: /
+Disallow: /api/
+
+User-agent: FacebookBot
+Allow: /
+Disallow: /api/
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /api/
+
+# Sitemaps
 Sitemap: https://ihadthisdream.com/sitemap-index.xml
+Sitemap: https://ihadthisdream.com/sitemap-images.xml

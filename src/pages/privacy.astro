@@ -1,0 +1,109 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { graph, breadcrumbSchema } from "~/lib/schema";
+import { pageTitle, SITE } from "~/lib/site";
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Privacy", url: "/privacy" },
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  {
+    "@type": "WebPage",
+    name: "Privacy",
+    description: "What I Had This Dream stores, what it sends, and what it never touches.",
+    url: `${SITE.url}/privacy`,
+    inLanguage: "en-US",
+  },
+);
+---
+
+<Base
+  title={pageTitle("Privacy")}
+  description="What I Had This Dream stores, what it sends, what it never touches. Plain-language privacy policy."
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Privacy</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      Plain-language privacy.
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 32px;">
+      Last updated: 2025-04-01.
+    </p>
+
+    <div class="analysis-body" style="font-size: 18px;">
+      <h2>Your dream journal</h2>
+      <p>
+        Anything you save in the journal at the bottom of the home page
+        stays in your browser's <code>localStorage</code>. It is not sent
+        to our servers, not synced across devices, and not visible to us.
+        If you clear your browser data, your journal is gone — there is no
+        backup we can restore. Use the "Export" button to save a JSON copy
+        anytime.
+      </p>
+
+      <h2>The interpret tool</h2>
+      <p>
+        When you submit a dream to the chat interpreter, the text of that
+        dream is sent to our model provider (currently Anthropic) so the
+        interpreter can answer. We also keep an anonymous copy on our
+        server to study which images and themes recur across dreamers — no
+        names, no email addresses, no IP addresses, no accounts, no cross-
+        request linking. We never sell this data and we never train models
+        on it. If you don't want your dream stored, simply don't submit it
+        to the interpreter.
+      </p>
+
+      <h2>The visualize tool</h2>
+      <p>
+        When you ask the interpreter to render your dream as a woodcut, a
+        short symbolic paraphrase of the dream is sent to OpenAI's image
+        model. Same rules as above: no identifying information attached.
+      </p>
+
+      <h2>Cookies and analytics</h2>
+      <p>
+        We use a privacy-preserving page-view counter (Vercel Analytics)
+        that sets no cookies and stores no IP addresses. If you've opted
+        in elsewhere, we may use Google Analytics 4 (with IP anonymization)
+        and Microsoft Clarity for aggregated heatmaps. None of these tools
+        record what you write in the interpreter or the journal.
+      </p>
+
+      <h2>Children</h2>
+      <p>
+        This site is not directed at children under 13 and we do not
+        knowingly collect any data from them.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        Under GDPR/UK GDPR/CCPA, you have the right to access, correct, or
+        delete personal data we hold about you. Because we deliberately
+        store no identifying information, we typically have nothing to
+        return. If you believe we hold something we shouldn't, write to
+        us at <a href="/contact">/contact</a>.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        If we change this policy in any non-trivial way, we'll bump the
+        "last updated" date at the top.
+      </p>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

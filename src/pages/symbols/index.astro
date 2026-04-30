@@ -3,7 +3,10 @@ import Base from "~/layouts/Base.astro";
 import SiteNav from "~/components/SiteNav.astro";
 import SiteFooter from "~/components/SiteFooter.astro";
 import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
 import { getCollection } from "astro:content";
+import { graph, breadcrumbSchema, collectionPageSchema } from "~/lib/schema";
+import { pageTitle, symbolPath } from "~/lib/site";
 
 const symbols = await getCollection("symbols");
 symbols.sort((a, b) => a.data.term.localeCompare(b.data.term));
@@ -27,14 +30,33 @@ const topThemes = Array.from(themeCounts.entries())
   .slice(0, 8)
   .map(([t]) => t);
 
-const title = "A–Z of Dream Symbols | I Had This Dream";
-const description = `Scholarly entries on ${symbols.length} dream symbols — animals, celestial bodies, archetypes, body, objects, actions, and nature.`;
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Symbols", url: "/symbols" },
+];
+
+const title = pageTitle(`Dream Symbols Dictionary — A–Z of ${symbols.length} Dream Meanings`);
+const description = `A–Z dictionary of ${symbols.length} dream symbols, each read across Jungian, Freudian, Vedic, Sufi, and Indigenous traditions, with cited primary sources. Free, no signup.`;
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  collectionPageSchema({
+    name: "Dream symbols dictionary (A–Z)",
+    description,
+    url: "/symbols",
+    items: symbols.map((s) => ({
+      name: s.data.term,
+      url: symbolPath(s.data.letter, s.id.replace(/\.md$/, "")),
+    })),
+  }),
+);
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} jsonLd={jsonLd}>
   <SiteNav active="symbols" />
 
-  <main class="container" style="padding-top: 56px; padding-bottom: 96px;">
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px;">
+    <Breadcrumbs items={breadcrumbs} />
     <div class="eyebrow" style="justify-content: flex-start;">Dream dictionary</div>
     <h1 style="font-size: clamp(36px, 5vw, 56px); margin-bottom: 16px;">
       An <em style="color: var(--lav-deep); font-style: italic;">A–Z</em> of dream symbols
@@ -80,7 +102,7 @@ const description = `Scholarly entries on ${symbols.length} dream symbols — an
                     <img
                       class="symbol-thumb"
                       src={s.data.image}
-                      alt=""
+                      alt={`Woodcut of ${s.data.term}`}
                       loading="lazy"
                       decoding="async"
                       width="72"

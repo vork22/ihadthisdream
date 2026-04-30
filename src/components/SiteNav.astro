@@ -13,10 +13,10 @@ const { active = "" } = Astro.props as { active?: string };
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/#interpret" class:list={[{ active: active === "interpret" }]}>Interpret</a>
-      <a href="/#common" class:list={[{ active: active === "common" }]}>Common Dreams</a>
+      <a href="/dreams" class:list={[{ active: active === "common" }]}>Common Dreams</a>
       <a href="/symbols" class:list={[{ active: active === "symbols" }]}>Symbols</a>
+      <a href="/articles" class:list={[{ active: active === "articles" }]}>Articles</a>
       <a href="/#journal" class:list={[{ active: active === "journal" }]}>Journal</a>
-      <a href="/#faq" class:list={[{ active: active === "faq" }]}>FAQ</a>
     </nav>
     <button
       class="nav-burger"
@@ -35,10 +35,13 @@ const { active = "" } = Astro.props as { active?: string };
 <div class="mobile-menu" data-mobile-menu>
   <div class="mobile-menu-panel">
     <a href="/#interpret">Interpret</a>
-    <a href="/#common">Common Dreams</a>
+    <a href="/dreams">Common Dreams</a>
     <a href="/symbols">Symbols A–Z</a>
+    <a href="/articles">Articles</a>
     <a href="/#journal">Journal</a>
-    <a href="/#faq">FAQ</a>
+    <a href="/about">About</a>
+    <a href="/methodology">Methodology</a>
+    <a href="/sources">Sources</a>
   </div>
 </div>
 
@@ -60,15 +63,12 @@ const { active = "" } = Astro.props as { active?: string };
     burger.addEventListener("click", () => {
       setOpen(!menu.classList.contains("is-open"));
     });
-    // Backdrop tap (click on the scrim, not the panel)
     menu.addEventListener("click", (e) => {
       if (e.target === menu) setOpen(false);
     });
-    // Link clicks close the sheet
     menu.querySelectorAll("a").forEach((a) => {
       a.addEventListener("click", () => setOpen(false));
     });
-    // Resize above the breakpoint closes + unlocks scroll
     window.addEventListener("resize", () => {
       if (window.innerWidth > 900) setOpen(false);
     });

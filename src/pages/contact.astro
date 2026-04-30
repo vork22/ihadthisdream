@@ -1,0 +1,81 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { graph, breadcrumbSchema } from "~/lib/schema";
+import { pageTitle, SITE } from "~/lib/site";
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Contact", url: "/contact" },
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  {
+    "@type": "ContactPage",
+    name: "Contact",
+    url: `${SITE.url}/contact`,
+    inLanguage: "en-US",
+  },
+);
+---
+
+<Base
+  title={pageTitle("Contact")}
+  description="Contact I Had This Dream — corrections, citations, partnerships, press. Plus mental-health crisis resources."
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Contact</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      Get in touch.
+    </h1>
+
+    <div class="analysis-body" style="font-size: 18px;">
+      <p>
+        Corrections, citation requests, partnership inquiries, press —
+        write to <a href="mailto:hello@ihadthisdream.com">hello@ihadthisdream.com</a>.
+      </p>
+      <p>
+        If you've found a factual error in an entry, a missing source, or a
+        section that should have a "when to seek help" note and doesn't,
+        we want to hear about it. We respond.
+      </p>
+
+      <h2 id="help">Crisis support — please don't write to us first</h2>
+      <p>
+        We are not a crisis service and we cannot respond fast enough to
+        be one. If you're in distress or having thoughts of self-harm,
+        please reach out to one of these resources right now:
+      </p>
+      <ul>
+        <li>
+          <strong>U.S./Canada:</strong> dial or text <strong>988</strong>
+          (Suicide & Crisis Lifeline).
+        </li>
+        <li>
+          <strong>U.K./Ireland:</strong> Samaritans —
+          <a href="tel:116123">116 123</a> (free, 24/7).
+        </li>
+        <li>
+          <strong>International:</strong> the
+          <a href="https://findahelpline.com" rel="noopener" target="_blank">Find A Helpline</a>
+          directory lists vetted services in 130+ countries.
+        </li>
+        <li>
+          <strong>Therapy in your country:</strong> <a href="https://www.who.int/teams/mental-health-and-substance-use/world-mental-health-day" rel="noopener" target="_blank">WHO directory</a>.
+        </li>
+      </ul>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

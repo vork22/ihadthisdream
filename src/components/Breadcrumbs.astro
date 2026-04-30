@@ -1,0 +1,72 @@
+---
+// Visual + a11y breadcrumb trail. The corresponding BreadcrumbList JSON-LD
+// is emitted by the calling page via `breadcrumbSchema()` so the visible UI
+// and the structured data stay in lockstep.
+
+interface Item {
+  name: string;
+  url: string;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items } = Astro.props as Props;
+---
+
+<nav aria-label="Breadcrumb" class="breadcrumbs">
+  <ol>
+    {items.map((it, i) => (
+      <li>
+        {i < items.length - 1 ? (
+          <>
+            <a href={it.url}>{it.name}</a>
+            <span aria-hidden="true" class="sep">/</span>
+          </>
+        ) : (
+          <span aria-current="page">{it.name}</span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<style>
+  .breadcrumbs {
+    margin-bottom: 24px;
+    font-family: var(--body);
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .breadcrumbs ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .breadcrumbs li {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .breadcrumbs a {
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+  .breadcrumbs a:hover {
+    color: var(--lav-deep);
+    text-decoration: underline;
+  }
+  .breadcrumbs .sep {
+    opacity: 0.5;
+  }
+  .breadcrumbs li:last-child span {
+    color: var(--ink);
+  }
+</style>

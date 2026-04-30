@@ -7,9 +7,11 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
+    "postbuild": "node scripts/indexnow.mjs || true",
     "preview": "astro preview",
     "astro": "astro",
-    "generate:symbols": "node scripts/generate-symbol-images.mjs"
+    "generate:symbols": "node scripts/generate-symbol-images.mjs",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.0",

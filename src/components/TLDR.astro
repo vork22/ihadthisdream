@@ -1,0 +1,42 @@
+---
+// Citation-shaped key-fact box for the top of every long-form page. Marked up
+// with itemprop=abstract so LLMs can lift it cleanly. Designed to be the
+// chunk that gets quoted verbatim in ChatGPT/Perplexity answers.
+---
+
+<div
+  class="tldr-box"
+  itemscope
+  itemtype="https://schema.org/WebPageElement"
+  itemprop="abstract"
+>
+  <div class="tldr-label">In brief</div>
+  <div class="tldr-body">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .tldr-box {
+    margin: 24px 0 40px;
+    padding: 20px 24px;
+    background: var(--cloud);
+    border-left: 3px solid var(--lav-deep);
+    border-radius: 6px;
+  }
+  .tldr-label {
+    font-family: var(--body);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--lav-deep);
+    margin-bottom: 8px;
+  }
+  .tldr-body {
+    font-family: var(--display);
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+</style>

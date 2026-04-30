@@ -1,0 +1,163 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { getCollection } from "astro:content";
+import { graph, breadcrumbSchema, collectionPageSchema } from "~/lib/schema";
+import { pageTitle, articlePath } from "~/lib/site";
+
+const articles = await getCollection("articles");
+articles.sort((a, b) => {
+  if (a.data.order !== b.data.order) return a.data.order - b.data.order;
+  return (
+    new Date(b.data.datePublished).getTime() -
+    new Date(a.data.datePublished).getTime()
+  );
+});
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Articles", url: "/articles" },
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  collectionPageSchema({
+    name: "Articles on dream interpretation",
+    description:
+      "Long-form, sourced articles on Jung, Freud, Vedic and Sufi traditions, recurring dreams, lucid dreaming, nightmares, and the science of dreaming.",
+    url: "/articles",
+    items: articles.map((a) => ({
+      name: a.data.title,
+      url: articlePath(a.data.slug),
+    })),
+  }),
+);
+
+const formatDate = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
+---
+
+<Base
+  title={pageTitle("Articles on Dream Interpretation, Sourced & Long-Form")}
+  description="Long-form articles on Jung, Freud, Vedic and Sufi dream traditions, recurring dreams, lucid dreaming, nightmares, and the science of REM sleep — every claim cited."
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 880px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Articles</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      Long reads, every claim <em style="color: var(--lav-deep); font-style: italic;">cited</em>.
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 48px;">
+      Pillar pieces on the traditions, the techniques, and the science of
+      dreaming. Drawn from primary sources, edited for clarity, written to
+      be quoted.
+    </p>
+
+    {articles.length === 0 ? (
+      <p style="color: var(--ink-faint); font-style: italic;">Articles are being written. Check back soon.</p>
+    ) : (
+      <ul class="articles-list">
+        {articles.map((a) => (
+          <li class="article-item">
+            <a href={articlePath(a.data.slug)}>
+              <div class="article-meta">
+                {a.data.pillar && <span class="article-pillar">Pillar</span>}
+                <span class="article-date">{formatDate(a.data.datePublished)}</span>
+                {a.data.readingMinutes && (
+                  <span class="article-mins">· {a.data.readingMinutes} min read</span>
+                )}
+              </div>
+              <h2 class="article-title">{a.data.title}</h2>
+              <p class="article-desc">{a.data.description}</p>
+              {a.data.tags.length > 0 && (
+                <div class="article-tags">
+                  {a.data.tags.slice(0, 4).map((t) => <span>{t}</span>)}
+                </div>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>
+
+<style>
+  .articles-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 24px;
+  }
+  .article-item a {
+    display: block;
+    padding: 24px 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .article-item a:hover {
+    transform: translateY(-2px);
+    border-color: var(--lav);
+  }
+  .article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-family: var(--body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+  .article-pillar {
+    background: var(--lav-deep);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .article-title {
+    font-family: var(--display);
+    font-size: 28px;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+  .article-desc {
+    color: var(--ink-soft);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .article-tags {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .article-tags span {
+    font-family: var(--body);
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--cloud);
+    color: var(--lav-deep);
+    text-transform: lowercase;
+  }
+</style>

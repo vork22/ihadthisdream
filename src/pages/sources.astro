@@ -1,0 +1,163 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { graph, breadcrumbSchema } from "~/lib/schema";
+import { pageTitle, SITE } from "~/lib/site";
+import { SOURCES, sourceToCitation, sourceToSchema } from "~/lib/sources";
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Sources", url: "/sources" },
+];
+
+const list = Object.values(SOURCES);
+
+// Group sources by category for the visible page.
+const order = [
+  "Depth psychology",
+  "Antiquity & medieval",
+  "Religious & sacred texts",
+  "Indigenous & folk",
+  "Modern science & sleep research",
+];
+
+const categoryOf = (id: string): (typeof order)[number] => {
+  if (
+    id.startsWith("jung") ||
+    id.startsWith("freud") ||
+    id === "hillman_dream_underworld" ||
+    id === "von_franz_dreams" ||
+    id === "bulkeley_big_dreams" ||
+    id === "hartmann_nature_dreams" ||
+    id === "hobson_dreaming"
+  ) return "Depth psychology";
+  if (
+    id === "artemidorus_oneirocritica" ||
+    id === "ibn_sirin_tabir" ||
+    id === "synesius_on_dreams"
+  ) return "Antiquity & medieval";
+  if (
+    id === "atharvaveda" ||
+    id === "upanishads_brihadaranyaka" ||
+    id.startsWith("bible_") ||
+    id === "quran_yusuf"
+  ) return "Religious & sacred texts";
+  if (
+    id === "irwin_dream_seekers" ||
+    id === "tedlock_dreaming" ||
+    id === "black_elk_speaks" ||
+    id === "parman_dream_telling"
+  ) return "Indigenous & folk";
+  return "Modern science & sleep research";
+};
+
+const grouped = new Map<string, typeof list>();
+for (const cat of order) grouped.set(cat, [] as unknown as typeof list);
+for (const s of list) {
+  const cat = categoryOf(s.id);
+  grouped.get(cat)!.push(s);
+}
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  {
+    "@type": "CollectionPage",
+    name: "Sources & bibliography",
+    description: "The full bibliography behind every interpretation on I Had This Dream.",
+    url: `${SITE.url}/sources`,
+    inLanguage: "en-US",
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: list.length,
+      itemListElement: list.map((s, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        item: sourceToSchema(s),
+      })),
+    },
+  },
+);
+---
+
+<Base
+  title={pageTitle("Sources & Bibliography")}
+  description={`The full bibliography of primary sources I Had This Dream cites — ${list.length} works across depth psychology, sacred texts, antiquity, ethnography, and modern sleep science.`}
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Bibliography</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      The works <em style="color: var(--lav-deep); font-style: italic;">we read so you don't have to</em>.
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 40px;">
+      {list.length} primary sources stand behind the interpretations on
+      this site. Where you see a citation on a symbol or dream page, it
+      points to one of these.
+    </p>
+
+    {order.map((cat) => {
+      const items = grouped.get(cat) ?? [];
+      if (items.length === 0) return null;
+      return (
+        <section style="margin-bottom: 48px;">
+          <h2 style="font-family: var(--display); font-size: 28px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line);">
+            {cat}
+          </h2>
+          <ol class="src-list">
+            {items.map((s) => (
+              <li id={s.id}>
+                <span set:html={sourceToCitation(s)} />
+                {s.url && (
+                  <>
+                    {" "}
+                    <a href={s.url} rel="noopener noreferrer external" target="_blank">read online</a>
+                  </>
+                )}
+                {s.notes && <div class="src-note">{s.notes}</div>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
+    })}
+
+    <p style="margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--ink-soft);">
+      Missing a source you think we should cite? <a href="/contact">Tell us</a>.
+    </p>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>
+
+<style>
+  .src-list {
+    list-style: decimal;
+    padding-left: 22px;
+    margin: 0;
+    display: grid;
+    gap: 14px;
+  }
+  .src-list li {
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  .src-list a {
+    color: var(--lav-deep);
+  }
+  .src-note {
+    margin-top: 4px;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-faint);
+  }
+</style>

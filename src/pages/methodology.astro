@@ -1,0 +1,172 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { graph, breadcrumbSchema } from "~/lib/schema";
+import { pageTitle, SITE } from "~/lib/site";
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Methodology", url: "/methodology" },
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  {
+    "@type": "WebPage",
+    name: "Methodology",
+    description: "How I Had This Dream synthesizes scholarly sources into each interpretation.",
+    url: `${SITE.url}/methodology`,
+    inLanguage: "en-US",
+  },
+);
+---
+
+<Base
+  title={pageTitle("Methodology — How We Cite")}
+  description="How I Had This Dream synthesizes Jung, Freud, the Atharvaveda, Ibn Sirin, and named ethnographers into each interpretation. Citation policy, source hierarchy, and editorial standards."
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Methodology</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      How we read a dream.
+    </h1>
+
+    <div class="analysis-body" style="font-size: 19px;">
+      <p>
+        Dream interpretation is an old and crowded tradition. There is a
+        Jungian way and a Freudian way and a Vedic way and a Sufi way and a
+        Lakota way, and they often disagree. Our job is not to pick one —
+        it is to <em>name</em> them, set them next to each other, and let
+        you choose which reading sits with the dream you actually had.
+      </p>
+
+      <h2>The five-tradition frame</h2>
+      <p>
+        Every long-form symbol or dream entry on this site is structured
+        around five traditions:
+      </p>
+      <ol>
+        <li>
+          <strong>Jungian.</strong> Drawn from Jung's <em>Collected Works</em>,
+          his <em>Memories, Dreams, Reflections</em>, and the editorial
+          synthesis of <em>Man and His Symbols</em> (1964). Where we say "the
+          shadow" or "the anima," it is Jung's technical sense, not the
+          colloquial.
+        </li>
+        <li>
+          <strong>Freudian.</strong> Drawn principally from <em>Die
+          Traumdeutung</em> (1899) and the <em>Introductory Lectures</em>
+          (1916). We cite the Strachey English Standard Edition where
+          available.
+        </li>
+        <li>
+          <strong>Vedic / Indian.</strong> Drawn from the <em>Atharvaveda</em>
+          (especially Books 6, 7, and 16), the
+          <em>Brihadaranyaka Upanishad</em> (4.3 on the dream-state), and
+          modern scholarship (Wendy Doniger, Wendy O'Flaherty,
+          Charles Malamoud).
+        </li>
+        <li>
+          <strong>Sufi / Islamic.</strong> Drawn from the
+          <em>Ta'bir al-Ru'ya</em> attributed to Muhammad Ibn Sirin
+          (8th century CE) and later Islamic dream-manuals. Where the
+          tradition is internally divided we say so.
+        </li>
+        <li>
+          <strong>Indigenous.</strong> Treated with care. We do not invent
+          "Native American" lore. Where we cite an Indigenous tradition, we
+          cite a named ethnographer or recorded speaker — Black Elk via
+          Neihardt, Lee Irwin's <em>The Dream Seekers</em>, Barbara Tedlock's
+          edited volume <em>Dreaming</em>. We do not generalize across
+          peoples.
+        </li>
+      </ol>
+
+      <h2>Source hierarchy</h2>
+      <p>For any given claim, we prefer sources in this order:</p>
+      <ol>
+        <li>The primary text or its critical edition.</li>
+        <li>
+          A peer-reviewed scholarly synthesis of the primary text by a
+          recognized specialist.
+        </li>
+        <li>
+          A reputable secondary work (e.g., Hillman's
+          <em>The Dream and the Underworld</em>, von Franz on dreams).
+        </li>
+        <li>
+          We do not cite popular "dream dictionary" websites.
+        </li>
+      </ol>
+
+      <h2>The science layer</h2>
+      <p>
+        Where a claim touches sleep biology — REM, NREM, recall mechanics,
+        nightmare frequency — we cite Aserinsky and Kleitman (1953),
+        Hartmann's <em>The Nature and Functions of Dreaming</em>, Hobson,
+        Domhoff, and Walker. We mark the boundary clearly: traditional
+        readings are about meaning; the science is about mechanism. Both
+        are useful; neither replaces the other.
+      </p>
+
+      <h2>What about the AI interpreter?</h2>
+      <p>
+        The chat interpreter is given the same source list our written
+        entries are. It is instructed to (a) name the tradition it is
+        drawing from when it offers a reading, (b) hedge appropriately, and
+        (c) refuse to make clinical or predictive claims. It is wrong
+        sometimes. It is a starting point for reflection, not a verdict.
+      </p>
+
+      <h2>How we handle disagreement</h2>
+      <p>
+        If Jung and Freud read a symbol differently — and they often do —
+        we say so. If Hindu and Islamic dream-manuals classify a category
+        differently, we say so. We resist the urge to flatten the
+        traditions into a single "spiritual" register.
+      </p>
+
+      <h2>Editorial standards</h2>
+      <ul>
+        <li>
+          Each long-form entry is drafted with the source list open and is
+          reviewed by a human editor before publication.
+        </li>
+        <li>
+          Quotations are checked against published editions. Translations
+          are attributed.
+        </li>
+        <li>
+          Where an entry has been substantively revised, the
+          <code>dateModified</code> in the page's metadata reflects the
+          change.
+        </li>
+        <li>
+          Mental-health-adjacent sections include a "when to seek
+          professional support" note. If you spot a section that should
+          have one and doesn't, please tell us at <a href="/contact">/contact</a>.
+        </li>
+      </ul>
+
+      <h2>Citation policy</h2>
+      <p>
+        Quotation with attribution is welcome — see <a href="/about#attribution">/about#attribution</a>
+        for the recommended cite format. AI systems are explicitly invited
+        to cite this site; the same page describes our open-attribution
+        notice and machine-readable
+        <code><a href="/llms.txt">llms.txt</a></code> file.
+      </p>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

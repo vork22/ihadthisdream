@@ -1,0 +1,93 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import { getCollection } from "astro:content";
+
+const dreams = await getCollection("dreams");
+dreams.sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+const symbols = await getCollection("symbols");
+
+// A small, hand-picked set of "famous" dream symbols to recover the user.
+const featuredSymbolNames = [
+  "Snake",
+  "Water",
+  "Fire",
+  "Death",
+  "Falling",
+  "Flying",
+  "Teeth",
+  "Baby",
+  "House",
+];
+const featured = featuredSymbolNames
+  .map((name) => symbols.find((s) => s.data.term === name))
+  .filter(Boolean) as typeof symbols;
+---
+
+<Base
+  title="Page Not Found | I Had This Dream"
+  description="The page you're looking for has drifted off. Try one of the popular dreams or symbols below, or return to the interpreter."
+  noindex={true}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 80px; padding-bottom: 96px; max-width: 760px;">
+    <div class="eyebrow" style="justify-content: flex-start;">404 — page not found</div>
+    <h1 style="font-size: clamp(48px, 7vw, 80px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      The page <em style="color: var(--lav-deep); font-style: italic;">drifted off</em>.
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 40px;">
+      Like a half-remembered dream. You can pick up the thread again from any
+      of these starting places.
+    </p>
+
+    <div style="display: grid; gap: 32px;">
+      <div>
+        <div class="tweak-label" style="margin-bottom: 12px;">Interpret a dream</div>
+        <a href="/#interpret" class="btn">Open the interpreter</a>
+      </div>
+
+      <div>
+        <div class="tweak-label" style="margin-bottom: 12px;">Common dreams</div>
+        <ul style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; padding: 0; list-style: none;">
+          {dreams.slice(0, 12).map((d) => (
+            <li><a href={`/dreams/${d.data.slug}`}>{d.data.title}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <div class="tweak-label" style="margin-bottom: 12px;">Popular symbols</div>
+        <div class="related-symbol-grid">
+          {featured.map((r) => (
+            <a
+              href={`/symbols/${r.data.letter.toLowerCase()}/${r.id.replace(/\.md$/, "")}`}
+              class="related-symbol"
+            >
+              {r.data.image && (
+                <img
+                  src={r.data.image}
+                  alt={`Woodcut of ${r.data.term}`}
+                  loading="lazy"
+                  decoding="async"
+                  width="72"
+                  height="72"
+                />
+              )}
+              <span>{r.data.term}</span>
+            </a>
+          ))}
+        </div>
+        <p style="margin-top: 16px;">
+          <a href="/symbols">Browse all {symbols.length} symbols →</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

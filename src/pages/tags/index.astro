@@ -1,0 +1,80 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { getCollection } from "astro:content";
+import { graph, breadcrumbSchema } from "~/lib/schema";
+import { pageTitle, tagPath } from "~/lib/site";
+
+const symbols = await getCollection("symbols");
+const dreams = await getCollection("dreams");
+const articles = await getCollection("articles");
+
+const counts = new Map<string, { label: string; count: number }>();
+const slugify = (s: string) => s.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
+
+function add(label: string) {
+  if (!label) return;
+  const key = slugify(label);
+  if (!key) return;
+  const existing = counts.get(key);
+  if (existing) existing.count++;
+  else counts.set(key, { label, count: 1 });
+}
+
+for (const s of symbols) {
+  for (const t of s.data.themes) add(t);
+  for (const t of s.data.traditions) add(t);
+}
+for (const d of dreams) for (const t of d.data.traditions) add(t);
+for (const a of articles) for (const t of a.data.tags) add(t);
+
+const tagList = Array.from(counts.entries())
+  .sort((a, b) => b[1].count - a[1].count);
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Tags", url: "/tags" },
+];
+
+const jsonLd = graph(breadcrumbSchema(breadcrumbs), {
+  "@type": "CollectionPage",
+  name: "Tags",
+  url: "https://ihadthisdream.com/tags",
+  inLanguage: "en-US",
+});
+---
+
+<Base
+  title={pageTitle("Tags — Topic Clusters")}
+  description="Topic clusters across the symbols dictionary, common dreams, and long-form articles. Browse dream interpretation by theme, tradition, or archetype."
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 880px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Tags</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      Topic clusters.
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 40px;">
+      {tagList.length} cross-referenced themes connecting symbols, common
+      dreams, and articles. Pick a thread.
+    </p>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      {tagList.map(([slug, { label, count }]) => (
+        <a class="chip" href={tagPath(slug)} style="text-transform: lowercase;">
+          {label} <span style="opacity: 0.6;">· {count}</span>
+        </a>
+      ))}
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

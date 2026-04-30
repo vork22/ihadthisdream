@@ -1,0 +1,84 @@
+---
+// Cited works block — visible bibliography that mirrors the JSON-LD `citation`
+// array. Linking the same source ids on the page and in schema is what makes
+// LLMs trust and cite the page.
+
+import { resolveSources, sourceToCitation } from "~/lib/sources";
+
+interface Props {
+  ids: readonly string[];
+}
+
+const { ids } = Astro.props as Props;
+const sources = resolveSources(ids);
+---
+
+{sources.length > 0 && (
+  <section class="cited" aria-labelledby="cited-heading">
+    <h2 id="cited-heading">Cited works</h2>
+    <p class="cited-note">
+      Each interpretation on this page traces back to one of these primary
+      sources. Quotation with attribution welcome — see our{" "}
+      <a href="/methodology">methodology</a> for how we cite.
+    </p>
+    <ol class="cited-list">
+      {sources.map((s) => (
+        <li id={`cite-${s.id}`}>
+          <span set:html={sourceToCitation(s)} />
+          {s.url && (
+            <>
+              {" "}
+              <a href={s.url} rel="noopener noreferrer external" target="_blank">
+                read online
+              </a>
+            </>
+          )}
+          {s.notes && <div class="cited-note-inline">{s.notes}</div>}
+        </li>
+      ))}
+    </ol>
+  </section>
+)}
+
+<style>
+  .cited {
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .cited h2 {
+    font-family: var(--display);
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .cited-note {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  .cited-list {
+    list-style: decimal;
+    padding-left: 22px;
+    margin: 0;
+    display: grid;
+    gap: 12px;
+  }
+  .cited-list li {
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .cited-list em {
+    color: var(--ink);
+  }
+  .cited-list a {
+    color: var(--lav-deep);
+  }
+  .cited-note-inline {
+    margin-top: 4px;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 14px;
+  }
+</style>

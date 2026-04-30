@@ -1,0 +1,180 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { getCollection } from "astro:content";
+import { graph, breadcrumbSchema, collectionPageSchema } from "~/lib/schema";
+import { pageTitle, symbolPath, dreamPath, articlePath } from "~/lib/site";
+
+export async function getStaticPaths() {
+  const symbols = await getCollection("symbols");
+  const dreams = await getCollection("dreams");
+  const articles = await getCollection("articles");
+
+  // Tags pool from: symbol themes, symbol traditions, dream traditions, article tags.
+  const slugify = (s: string) => s.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
+  const tags = new Map<string, { label: string; symbolIds: string[]; dreamSlugs: string[]; articleSlugs: string[] }>();
+
+  function add(label: string, kind: "symbol" | "dream" | "article", id: string) {
+    if (!label) return;
+    const slug = slugify(label);
+    if (!slug) return;
+    if (!tags.has(slug)) {
+      tags.set(slug, { label, symbolIds: [], dreamSlugs: [], articleSlugs: [] });
+    }
+    const bucket = tags.get(slug)!;
+    if (kind === "symbol") bucket.symbolIds.push(id);
+    if (kind === "dream") bucket.dreamSlugs.push(id);
+    if (kind === "article") bucket.articleSlugs.push(id);
+  }
+
+  for (const s of symbols) {
+    for (const t of s.data.themes) add(t, "symbol", s.id);
+    for (const t of s.data.traditions) add(t, "symbol", s.id);
+  }
+  for (const d of dreams) {
+    for (const t of d.data.traditions) add(t, "dream", d.data.slug);
+  }
+  for (const a of articles) {
+    for (const t of a.data.tags) add(t, "article", a.data.slug);
+  }
+
+  return Array.from(tags.entries()).map(([slug, bucket]) => ({
+    params: { tag: slug },
+    props: { tagSlug: slug, ...bucket },
+  }));
+}
+
+interface Props {
+  tagSlug: string;
+  label: string;
+  symbolIds: string[];
+  dreamSlugs: string[];
+  articleSlugs: string[];
+}
+const { tagSlug, label, symbolIds, dreamSlugs, articleSlugs } = Astro.props as Props;
+
+const symbols = await getCollection("symbols");
+const dreams = await getCollection("dreams");
+const articles = await getCollection("articles");
+
+const taggedSymbols = symbols.filter((s) => symbolIds.includes(s.id));
+taggedSymbols.sort((a, b) => a.data.term.localeCompare(b.data.term));
+const taggedDreams = dreams.filter((d) => dreamSlugs.includes(d.data.slug));
+taggedDreams.sort((a, b) => a.data.title.localeCompare(b.data.title));
+const taggedArticles = articles.filter((a) => articleSlugs.includes(a.data.slug));
+
+const url = `/tags/${tagSlug}`;
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Tags", url: "/tags" },
+  { name: label, url },
+];
+
+const totalCount = taggedSymbols.length + taggedDreams.length + taggedArticles.length;
+const description = `Everything on I Had This Dream tagged "${label}" — ${taggedSymbols.length} symbols, ${taggedDreams.length} common dreams, ${taggedArticles.length} articles. Sourced and cross-referenced.`;
+
+const items = [
+  ...taggedSymbols.map((s) => ({
+    name: s.data.term,
+    url: symbolPath(s.data.letter, s.id.replace(/\.md$/, "")),
+  })),
+  ...taggedDreams.map((d) => ({ name: d.data.title, url: dreamPath(d.data.slug) })),
+  ...taggedArticles.map((a) => ({ name: a.data.title, url: articlePath(a.data.slug) })),
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  collectionPageSchema({
+    name: `${label} — dream symbols, dreams, and articles`,
+    description,
+    url,
+    items,
+  }),
+);
+---
+
+<Base
+  title={pageTitle(`${label} in Dreams (${totalCount} entries)`)}
+  description={description}
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Tag</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em; text-transform: capitalize;">
+      {label}
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 48px;">
+      {totalCount} entries on I Had This Dream connect to <em>{label.toLowerCase()}</em>.
+      They are listed below, organized by kind.
+    </p>
+
+    {taggedArticles.length > 0 && (
+      <section style="margin-bottom: 48px;">
+        <h2 style="font-family: var(--display); font-size: 28px; margin-bottom: 16px;">Articles</h2>
+        <ul style="list-style: none; padding: 0; display: grid; gap: 12px;">
+          {taggedArticles.map((a) => (
+            <li>
+              <a
+                href={articlePath(a.data.slug)}
+                style="display: block; padding: 16px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: inherit; text-decoration: none;"
+              >
+                <strong style="font-family: var(--display); font-size: 18px;">{a.data.title}</strong>
+                <div style="color: var(--ink-soft); font-size: 15px; margin-top: 4px;">{a.data.description}</div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {taggedDreams.length > 0 && (
+      <section style="margin-bottom: 48px;">
+        <h2 style="font-family: var(--display); font-size: 28px; margin-bottom: 16px;">Common dreams</h2>
+        <div class="dreams-grid">
+          {taggedDreams.map((d) => (
+            <a href={dreamPath(d.data.slug)} class="dream-card">
+              <div class="dream-card-title">{d.data.title}</div>
+              <div class="dream-card-one">{d.data.excerpt}</div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {taggedSymbols.length > 0 && (
+      <section style="margin-bottom: 48px;">
+        <h2 style="font-family: var(--display); font-size: 28px; margin-bottom: 16px;">Symbols</h2>
+        <div class="related-symbol-grid">
+          {taggedSymbols.map((r) => (
+            <a
+              href={symbolPath(r.data.letter, r.id.replace(/\.md$/, ""))}
+              class="related-symbol"
+            >
+              {r.data.image && (
+                <img
+                  src={r.data.image}
+                  alt={`Woodcut of ${r.data.term}`}
+                  loading="lazy"
+                  decoding="async"
+                  width="72"
+                  height="72"
+                />
+              )}
+              <span>{r.data.term}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

@@ -1,0 +1,196 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import TLDR from "~/components/TLDR.astro";
+import CitedWorks from "~/components/CitedWorks.astro";
+import PageFAQ from "~/components/PageFAQ.astro";
+import { getCollection, render } from "astro:content";
+import {
+  graph,
+  breadcrumbSchema,
+  articleSchema,
+  faqSchema,
+} from "~/lib/schema";
+import { articleTitle, articlePath, dreamPath, symbolPath } from "~/lib/site";
+
+export async function getStaticPaths() {
+  const articles = await getCollection("articles");
+  return articles.map((a) => ({
+    params: { slug: a.data.slug },
+    props: { article: a },
+  }));
+}
+
+const { article } = Astro.props;
+const { Content } = await render(article);
+
+const url = articlePath(article.data.slug);
+const headline = article.data.headline ?? article.data.title;
+const title = articleTitle(headline);
+
+// Resolve related symbols / dreams / articles for the in-page mesh.
+const allSymbols = await getCollection("symbols");
+const allDreams = await getCollection("dreams");
+const allArticles = await getCollection("articles");
+
+const relatedSymbols = (article.data.relatedSymbols ?? [])
+  .map((name) => allSymbols.find((s) => s.data.term.toLowerCase() === name.toLowerCase()))
+  .filter(Boolean) as typeof allSymbols;
+
+const relatedDreams = (article.data.relatedDreams ?? [])
+  .map((slug) => allDreams.find((d) => d.data.slug === slug))
+  .filter(Boolean) as typeof allDreams;
+
+const relatedArticles = (article.data.relatedArticles ?? [])
+  .map((slug) => allArticles.find((a) => a.data.slug === slug))
+  .filter(Boolean) as typeof allArticles;
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Articles", url: "/articles" },
+  { name: article.data.title, url },
+];
+
+const citationIds = [
+  ...(article.data.primarySources ?? []),
+  ...(article.data.citations ?? []),
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  articleSchema({
+    headline,
+    description: article.data.description,
+    url,
+    image: article.data.image,
+    datePublished: article.data.datePublished,
+    dateModified: article.data.dateModified ?? article.data.datePublished,
+    keywords: article.data.tags,
+    articleSection: article.data.pillar ? "Pillar" : "Article",
+    citationIds,
+  }),
+  article.data.faqs && article.data.faqs.length > 0
+    ? faqSchema(article.data.faqs)
+    : null,
+);
+---
+
+<Base
+  title={title}
+  description={article.data.description}
+  ogImage={article.data.image ?? undefined}
+  ogType="article"
+  jsonLd={jsonLd}
+  publishedTime={article.data.datePublished}
+  modifiedTime={article.data.dateModified ?? article.data.datePublished}
+  articleSection={article.data.pillar ? "Pillar" : "Article"}
+  keywords={article.data.tags}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">
+      {article.data.pillar ? "Pillar article" : "Article"}
+      {article.data.readingMinutes && <span style="margin-left: 8px;">· {article.data.readingMinutes} min read</span>}
+    </div>
+
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em; text-wrap: balance;">
+      {article.data.title}
+    </h1>
+    <p
+      style="font-family: var(--display); font-size: 22px; font-style: italic; color: var(--peach-deep); margin-bottom: 32px; text-wrap: pretty;"
+    >
+      {article.data.description}
+    </p>
+
+    {article.data.tags.length > 0 && (
+      <div class="dream-card-themes" style="margin-bottom: 32px;">
+        {article.data.tags.map((t) => (
+          <a href={`/tags/${t.replace(/\s+/g, "-").toLowerCase()}`}><span>{t}</span></a>
+        ))}
+      </div>
+    )}
+
+    <div class="analysis-body" style="font-size: 19px;">
+      <Content />
+    </div>
+
+    {relatedSymbols.length > 0 && (
+      <div style="margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line);">
+        <div class="tweak-label" style="margin-bottom: 16px;">Related symbols</div>
+        <div class="related-symbol-grid">
+          {relatedSymbols.map((r) => (
+            <a
+              href={symbolPath(r.data.letter, r.id.replace(/\.md$/, ""))}
+              class="related-symbol"
+            >
+              {r.data.image && (
+                <img
+                  src={r.data.image}
+                  alt={`Woodcut of ${r.data.term}`}
+                  loading="lazy"
+                  decoding="async"
+                  width="72"
+                  height="72"
+                />
+              )}
+              <span>{r.data.term}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {relatedDreams.length > 0 && (
+      <div style="margin-top: 40px;">
+        <div class="tweak-label" style="margin-bottom: 16px;">Related common dreams</div>
+        <div class="dreams-grid">
+          {relatedDreams.map((d) => (
+            <a href={dreamPath(d.data.slug)} class="dream-card">
+              <div class="dream-card-title">{d.data.title}</div>
+              <div class="dream-card-one">{d.data.excerpt}</div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {relatedArticles.length > 0 && (
+      <div style="margin-top: 40px;">
+        <div class="tweak-label" style="margin-bottom: 16px;">Continue reading</div>
+        <ul style="list-style: none; padding: 0; display: grid; gap: 12px;">
+          {relatedArticles.map((a) => (
+            <li>
+              <a
+                href={articlePath(a.data.slug)}
+                style="display: block; padding: 16px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: inherit; text-decoration: none;"
+              >
+                <strong style="font-family: var(--display); font-size: 18px;">{a.data.title}</strong>
+                <div style="color: var(--ink-soft); font-size: 15px; margin-top: 4px;">{a.data.description}</div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {article.data.faqs && article.data.faqs.length > 0 && (
+      <PageFAQ items={article.data.faqs} />
+    )}
+
+    {citationIds.length > 0 && <CitedWorks ids={citationIds} />}
+
+    <div style="margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--line); display: flex; gap: 16px; flex-wrap: wrap;">
+      <a href="/#interpret" class="btn">Interpret a dream</a>
+      <a href="/articles" class="btn btn-ghost">More articles</a>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

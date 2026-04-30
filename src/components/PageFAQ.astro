@@ -1,0 +1,87 @@
+---
+// Per-page FAQ block. The calling page is responsible for emitting the
+// matching FAQPage JSON-LD via `faqSchema()` so the visible HTML and the
+// structured data describe the same questions.
+
+interface Item {
+  q: string;
+  a: string;
+}
+
+interface Props {
+  items: Item[];
+  title?: string;
+}
+
+const { items, title = "Frequently asked" } = Astro.props as Props;
+---
+
+{items.length > 0 && (
+  <section class="page-faq" aria-labelledby="page-faq-heading">
+    <h2 id="page-faq-heading">{title}</h2>
+    <div class="page-faq-list">
+      {items.map((item, i) => (
+        <details open={i === 0}>
+          <summary>{item.q}</summary>
+          <div class="page-faq-a">
+            <p>{item.a}</p>
+          </div>
+        </details>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .page-faq {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .page-faq h2 {
+    font-family: var(--display);
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+  .page-faq-list {
+    display: grid;
+    gap: 12px;
+  }
+  .page-faq-list details {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    padding: 14px 18px;
+  }
+  .page-faq-list summary {
+    font-family: var(--display);
+    font-size: 18px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .page-faq-list summary::-webkit-details-marker {
+    display: none;
+  }
+  .page-faq-list summary::after {
+    content: "+";
+    font-family: var(--mono);
+    color: var(--lav-deep);
+    transition: transform 0.2s ease;
+  }
+  .page-faq-list details[open] summary::after {
+    content: "−";
+  }
+  .page-faq-a {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+</style>

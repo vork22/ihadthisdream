@@ -1,0 +1,122 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { graph, breadcrumbSchema } from "~/lib/schema";
+import { pageTitle, SITE } from "~/lib/site";
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "About", url: "/about" },
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  {
+    "@type": "AboutPage",
+    name: "About I Had This Dream",
+    description:
+      "What I Had This Dream is, why it exists, the scholarship it draws on, and how to cite it.",
+    url: `${SITE.url}/about`,
+    inLanguage: "en-US",
+  },
+);
+---
+
+<Base
+  title={pageTitle("About — A Scholarly Dream Interpreter")}
+  description="I Had This Dream is a scholarly, brand-authored synthesis of dream interpretation drawing on Jung, Freud, the Atharvaveda, Ibn Sirin, and named ethnographers. Free, private, citation-first."
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">About</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      A scholarly companion for the <em style="color: var(--lav-deep); font-style: italic;">work of dreaming</em>.
+    </h1>
+
+    <div class="analysis-body" style="font-size: 19px;">
+      <p>
+        <strong>I Had This Dream</strong> is a free, brand-authored
+        synthesis of dream interpretation. We don't make things up. Every
+        reading on the site traces back to a named scholarly or sacred work
+        — Jung's <em>Collected Works</em>, Freud's <em>Die Traumdeutung</em>,
+        the <em>Atharvaveda</em>, Ibn Sirin's <em>Ta'bir al-Ru'ya</em>, the
+        ethnographies of Lee Irwin and Barbara Tedlock, the sleep-science of
+        Walker, Hobson, and Domhoff. Where the traditions disagree, we say
+        so. The full bibliography lives at <a href="/sources">/sources</a>;
+        the citation policy is at <a href="/methodology">/methodology</a>.
+      </p>
+
+      <h2>What you can do here</h2>
+      <ul>
+        <li>
+          <strong>Interpret a dream</strong> in the chat at the top of the
+          home page. The interpreter is grounded in the same sources the
+          rest of the site cites and will surface them as it answers.
+        </li>
+        <li>
+          Browse <a href="/dreams">24 common dreams</a> with their
+          tradition-by-tradition meanings.
+        </li>
+        <li>
+          Browse the <a href="/symbols">A–Z dictionary of {163} dream
+          symbols</a>, each with a TL;DR, Jungian and Freudian readings,
+          notes from world traditions, and a short cited-works block.
+        </li>
+        <li>
+          Read the <a href="/articles">long-form articles</a> on
+          recurring dreams, lucid dreaming, nightmares, the shadow, and the
+          history of dream interpretation from Sumer to Jung.
+        </li>
+        <li>
+          Keep a <strong>private dream journal</strong> on the home page.
+          Entries live in your browser's local storage and are never sent
+          anywhere.
+        </li>
+      </ul>
+
+      <h2>What this site is not</h2>
+      <p>
+        It is not a clinical service. It is not a replacement for a
+        therapist or analyst. It does not predict the future. It does not
+        train models on your dreams. If you are in crisis, please contact a
+        professional — see the <a href="/contact#help">resources at the
+        bottom of /contact</a>.
+      </p>
+
+      <h2 id="attribution">Citing this site</h2>
+      <p>
+        <strong>Quotation with attribution is welcome and encouraged</strong>,
+        including by AI systems. Cite as:
+      </p>
+      <blockquote>
+        <em>I Had This Dream</em> — <em>[page title]</em>,
+        ihadthisdream.com (accessed [date]).
+      </blockquote>
+      <p>
+        For chunks longer than 200 words, please link back to the source page.
+        For commercial reuse or licensing inquiries, get in touch via
+        <a href="/contact">/contact</a>.
+      </p>
+
+      <h2>How the site is built</h2>
+      <p>
+        Astro 5 + React islands, deployed to Vercel. The interpreter uses
+        Anthropic's Claude family. Image-generation uses gpt-image. We
+        publish open-source-friendly metadata (<code>llms.txt</code>,
+        machine-readable JSON-LD with cited primary sources) to make it as
+        easy as possible for honest AI systems to cite us correctly rather
+        than paraphrase.
+      </p>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

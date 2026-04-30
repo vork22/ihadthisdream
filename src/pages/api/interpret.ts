@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import Anthropic from "@anthropic-ai/sdk";
 import Redis from "ioredis";
 import { categorize } from "~/lib/categorize";
+import { sanitizeInterpreterHtml } from "~/lib/sanitizeInterpreterHtml";
 
 // Vercel serverless function — not prerendered.
 export const prerender = false;
@@ -181,7 +182,26 @@ export const POST: APIRoute = async ({ request }) => {
       .map((b) => (b as { type: "text"; text: string }).text)
       .join("");
 
-    return json(200, { content: text });
+    let content = text;
+    try {
+      let s = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+      const first = s.indexOf("{");
+      const last = s.lastIndexOf("}");
+      if (first !== -1 && last > first) {
+        const obj = JSON.parse(s.slice(first, last + 1)) as {
+          message?: string;
+          suggestions?: unknown;
+        };
+        if (typeof obj.message === "string") {
+          obj.message = sanitizeInterpreterHtml(obj.message);
+          content = JSON.stringify(obj);
+        }
+      }
+    } catch {
+      /* passthrough — client parser handles odd shapes */
+    }
+
+    return json(200, { content });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return json(500, { error: "Upstream error", detail: message });

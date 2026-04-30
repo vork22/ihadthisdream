@@ -1,0 +1,94 @@
+---
+import Base from "~/layouts/Base.astro";
+import SiteNav from "~/components/SiteNav.astro";
+import SiteFooter from "~/components/SiteFooter.astro";
+import Tweaks from "~/components/Tweaks.astro";
+import Breadcrumbs from "~/components/Breadcrumbs.astro";
+import { graph, breadcrumbSchema } from "~/lib/schema";
+import { pageTitle, SITE } from "~/lib/site";
+
+const breadcrumbs = [
+  { name: "Home", url: "/" },
+  { name: "Terms", url: "/terms" },
+];
+
+const jsonLd = graph(
+  breadcrumbSchema(breadcrumbs),
+  {
+    "@type": "WebPage",
+    name: "Terms of Use",
+    url: `${SITE.url}/terms`,
+    inLanguage: "en-US",
+  },
+);
+---
+
+<Base
+  title={pageTitle("Terms of Use")}
+  description="Terms of use for I Had This Dream — interpretations are for reflection, not clinical or predictive advice. Quotation with attribution welcome."
+  jsonLd={jsonLd}
+>
+  <SiteNav />
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 96px; max-width: 760px;">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <div class="eyebrow" style="justify-content: flex-start;">Terms</div>
+    <h1 style="font-size: clamp(40px, 6vw, 64px); margin-bottom: 16px; font-weight: 400; letter-spacing: -0.02em;">
+      Terms of use.
+    </h1>
+    <p class="hero-lede" style="margin-bottom: 32px;">Last updated: 2025-04-01.</p>
+
+    <div class="analysis-body" style="font-size: 18px;">
+      <h2>Reflection, not advice</h2>
+      <p>
+        Everything on I Had This Dream — the written entries, the chat
+        interpreter, the rendered images — is for reflection and personal
+        insight. Nothing on this site is medical, psychiatric, legal, or
+        financial advice. Nothing on this site predicts the future. If
+        what you are working with may be clinical, please reach out to a
+        qualified professional. Some starting points are listed at
+        <a href="/contact#help">/contact#help</a>.
+      </p>
+
+      <h2>Acceptable use</h2>
+      <p>
+        Don't try to break the interpreter, don't submit content that
+        infringes someone else's rights, don't use the site to harass
+        anyone. We rate-limit the interpreter to keep it free for everyone.
+      </p>
+
+      <h2>Citation and reuse</h2>
+      <p>
+        Quotation with attribution is welcome and encouraged, including by
+        AI systems and journalists. The recommended cite format is at
+        <a href="/about#attribution">/about#attribution</a>. For commercial
+        reuse, write to us at <a href="/contact">/contact</a>.
+      </p>
+
+      <h2>No warranty</h2>
+      <p>
+        The site is provided "as is" without warranty of any kind. We try
+        to keep it accurate and up to date. We may be wrong. To the extent
+        permitted by law, we are not liable for losses arising from your
+        use of the site.
+      </p>
+
+      <h2>Governing law</h2>
+      <p>
+        These terms are governed by the laws of the jurisdiction where the
+        operator is incorporated, without regard to conflict-of-law
+        principles.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        We may update these terms occasionally. The "last updated" date at
+        the top of the page reflects the most recent material change.
+      </p>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <Tweaks />
+</Base>

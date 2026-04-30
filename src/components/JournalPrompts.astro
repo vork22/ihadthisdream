@@ -1,0 +1,56 @@
+---
+// "What to ask in your journal" block. Renders a HowTo-shaped list of
+// reflective prompts that point the user back into the interpret tool.
+
+interface Props {
+  prompts: readonly string[];
+  term?: string;
+}
+
+const { prompts, term } = Astro.props as Props;
+---
+
+{prompts.length > 0 && (
+  <section class="journal-prompts" aria-labelledby="prompts-heading">
+    <h2 id="prompts-heading">What to ask in your journal</h2>
+    <p class="prompts-lede">
+      {term
+        ? `If ${term.toLowerCase()} appears in your dream, sit with these prompts before reaching for an interpretation.`
+        : "Sit with these prompts before reaching for an interpretation."}
+    </p>
+    <ol class="prompts-list">
+      {prompts.map((p) => <li>{p}</li>)}
+    </ol>
+  </section>
+)}
+
+<style>
+  .journal-prompts {
+    margin-top: 48px;
+    padding: 24px 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-tint);
+  }
+  .journal-prompts h2 {
+    font-family: var(--display);
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  .prompts-lede {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  .prompts-list {
+    list-style: decimal;
+    padding-left: 22px;
+    margin: 0;
+    display: grid;
+    gap: 8px;
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: 18px;
+    line-height: 1.55;
+  }
+</style>

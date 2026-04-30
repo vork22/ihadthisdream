@@ -1,18 +1,31 @@
 ---
 import "~/styles/globals.css";
+import { SITE } from "~/lib/site";
 
 interface Props {
   title?: string;
   description?: string;
   ogImage?: string;
+  ogType?: "website" | "article";
   jsonLd?: unknown;
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  articleSection?: string;
+  keywords?: string[];
 }
 
 const {
-  title = "I Had This Dream — dream interpretation, symbols & journal",
-  description = "A scholarly, warm dream interpreter drawing on Jung, Vedic, Indigenous, Sufi, and folk traditions. Chat about your dream, explore common dream meanings, browse an A–Z of symbols, and keep a private journal.",
-  ogImage = "/assets/hero-woodcut.png",
+  title = "I Had This Dream — Dream Interpretation, Symbols & Journal",
+  description = SITE.description,
+  ogImage = SITE.defaultOgImage,
+  ogType = "website",
   jsonLd,
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  articleSection,
+  keywords,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
@@ -28,12 +41,22 @@ const defaultGraph = {
       name: "I Had This Dream",
       description,
       inLanguage: "en-US",
+      publisher: { "@id": "https://ihadthisdream.com/#org" },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: "https://ihadthisdream.com/symbols?q={search_term_string}",
+        },
+        "query-input": "required name=search_term_string",
+      },
     },
     {
       "@type": "Organization",
       "@id": "https://ihadthisdream.com/#org",
       name: "I Had This Dream",
       url: "https://ihadthisdream.com/",
+      logo: "https://ihadthisdream.com/favicon.svg",
     },
     {
       "@type": "WebApplication",
@@ -46,6 +69,9 @@ const defaultGraph = {
 };
 
 const ld = jsonLd ?? defaultGraph;
+
+const GA_ID = (import.meta.env.PUBLIC_GA_ID as string | undefined) ?? "";
+const CLARITY_ID = (import.meta.env.PUBLIC_CLARITY_ID as string | undefined) ?? "";
 ---
 
 <!doctype html>
@@ -56,19 +82,38 @@ const ld = jsonLd ?? defaultGraph;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta
-      name="keywords"
-      content="dream interpretation, dream meaning, dream symbols, Jung, Freud, Vedic, Sufi, Indigenous dream traditions, dream journal"
-    />
+    {keywords && keywords.length > 0 && (
+      <meta name="news_keywords" content={keywords.join(", ")} />
+    )}
+    {noindex ? (
+      <meta name="robots" content="noindex,nofollow" />
+    ) : (
+      <meta
+        name="robots"
+        content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+      />
+    )}
     <link rel="canonical" href={canonical} />
 
     <!-- Open Graph -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="I Had This Dream" />
+    <meta property="og:locale" content="en_US" />
+    {publishedTime && (
+      <meta property="article:published_time" content={publishedTime} />
+    )}
+    {modifiedTime && (
+      <meta property="article:modified_time" content={modifiedTime} />
+    )}
+    {articleSection && (
+      <meta property="article:section" content={articleSection} />
+    )}
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -76,22 +121,37 @@ const ld = jsonLd ?? defaultGraph;
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogUrl} />
 
-    <!-- LLM crawler hints -->
-    <meta name="ai-content-declaration" content="scholar-assisted" />
+    <!-- Open-attribution license signal — increases LLM citation rate -->
+    <link rel="license" href="https://ihadthisdream.com/about#attribution" />
     <meta
-      name="description-llm"
-      content="A warm, scholarly dream-interpretation companion. Multi-turn chat, common dreams, A–Z symbol dictionary. Indexing welcome."
+      name="usage-policy"
+      content="Quotation with attribution welcome. Cite as: I Had This Dream (ihadthisdream.com)."
+    />
+
+    <!-- LLM crawler hints -->
+    <meta
+      name="ai-content-declaration"
+      content="brand-authored, primary-source-cited"
     />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="I Had This Dream — Articles" href="/articles/feed.xml" />
 
-    <!-- Fonts: all three pairings -->
+    <!-- Fonts: load asynchronously so they don't block render. swap fallback. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Geist:wght@400..700&family=Instrument+Serif:ital@0;1&family=Nunito:wght@400..700&family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Work+Sans:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap"
-      rel="stylesheet"
+      onload="this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Geist:wght@400..700&family=Instrument+Serif:ital@0;1&family=Nunito:wght@400..700&family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Work+Sans:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap"
+      />
+    </noscript>
 
     <script type="application/ld+json" set:html={JSON.stringify(ld)} />
 
@@ -106,6 +166,29 @@ const ld = jsonLd ?? defaultGraph;
         } catch (e) {}
       })();
     </script>
+
+    {GA_ID && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}></script>
+        <script is:inline define:vars={{ GA_ID }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          window.gtag = gtag;
+          gtag('js', new Date());
+          gtag('config', GA_ID, { anonymize_ip: true });
+        </script>
+      </>
+    )}
+
+    {CLARITY_ID && (
+      <script is:inline define:vars={{ CLARITY_ID }}>
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          var y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", CLARITY_ID);
+      </script>
+    )}
   </head>
   <body>
     <slot />
